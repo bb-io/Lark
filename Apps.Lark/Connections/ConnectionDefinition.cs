@@ -14,12 +14,26 @@ public class ConnectionDefinition : IConnectionDefinition
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = new List<ConnectionProperty>
             {
-                new(CredsNames.Token) { DisplayName = "API Token", Sensitive = true}
+                new(CredsNames.AppId) { DisplayName = "Application ID"},
+                new(CredsNames.AppSecret) { DisplayName="Application secret", Sensitive=true}
             }
         }
     };
 
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(
-        Dictionary<string, string> values) => values.Select(x => new AuthenticationCredentialsProvider(x.Key, x.Value)
-        ).ToList();
+        Dictionary<string, string> values)
+    {
+
+        var appId = values.First(v => v.Key == CredsNames.AppId);
+        yield return new AuthenticationCredentialsProvider(
+            appId.Key,
+            appId.Value
+        );
+
+        var appSecret = values.First(v => v.Key == CredsNames.AppSecret);
+        yield return new AuthenticationCredentialsProvider(
+            appSecret.Key,
+            appSecret.Value
+        );
+    }
 }

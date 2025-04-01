@@ -1,4 +1,5 @@
 ﻿using Apps.Appname.Api;
+using Apps.Appname.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using RestSharp;
@@ -13,9 +14,13 @@ public class ConnectionValidator: IConnectionValidator
     {
         try
         {
-            var client = new Client(authenticationCredentialsProviders);
+            var client = new LarkClient(authenticationCredentialsProviders);
 
-            await client.ExecuteWithErrorHandling(new RestRequest());
+            var appId = authenticationCredentialsProviders.First(v => v.KeyName == CredsNames.AppId).Value;
+            var appSecret = authenticationCredentialsProviders.First(v => v.KeyName == CredsNames.AppSecret).Value;
+
+            await client.GetToken(appId, appSecret);
+
 
             return new()
             {

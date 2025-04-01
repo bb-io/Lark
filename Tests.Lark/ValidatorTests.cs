@@ -1,8 +1,8 @@
 using Apps.Appname.Connections;
 using Blackbird.Applications.Sdk.Common.Authentication;
-using Tests.Appname.Base;
+using Tests.Lark.Base;
 
-namespace Tests.Appname;
+namespace Tests.Lark;
 
 [TestClass]
 public class ConnectionValidatorTests : TestBase

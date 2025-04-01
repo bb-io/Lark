@@ -16,12 +16,6 @@ public class ConnectionValidator: IConnectionValidator
         {
             var client = new LarkClient(authenticationCredentialsProviders);
 
-            var appId = authenticationCredentialsProviders.First(v => v.KeyName == CredsNames.AppId).Value;
-            var appSecret = authenticationCredentialsProviders.First(v => v.KeyName == CredsNames.AppSecret).Value;
-
-            await client.GetToken(appId, appSecret);
-
-
             return new()
             {
                 IsValid = true

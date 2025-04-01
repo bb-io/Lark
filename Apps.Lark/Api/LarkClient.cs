@@ -21,7 +21,7 @@ public class LarkClient : BlackBirdRestClient
 
         var token = GetToken(appId, appSecret).GetAwaiter().GetResult();
         this.AddDefaultHeader("Authorization", $"Bearer {token}");
-        this.AddDefaultHeader("Content-Type", "application/json");
+        //this.AddDefaultHeader("Content-Type", "application/json");
     }
 
     protected override Exception ConfigureErrorException(RestResponse response)

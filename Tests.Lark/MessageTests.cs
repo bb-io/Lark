@@ -11,7 +11,7 @@ public class MessageTests : TestBase
     [TestMethod]
     public async Task SendMessage_IsSucces()
     {
-        var actions = new MessageActions(InvocationContext,FileManager);
+        var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.SendMessage(new SendMessageRequest
         {
             ReceiveIdType = "user_id",
@@ -26,7 +26,7 @@ public class MessageTests : TestBase
     [TestMethod]
     public async Task SendFile_IsSucces()
     {
-        var actions = new MessageActions(InvocationContext,FileManager);
+        var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.SendFile(new SendFileRequest
         {
             //ReceiveIdType = "user_id",

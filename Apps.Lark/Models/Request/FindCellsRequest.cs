@@ -3,7 +3,7 @@
 namespace Apps.Lark.Models.Request
 {
     public class FindCellsRequest
-    {   
+    {
         [Display("Range")]
         public string Range { get; set; }
 

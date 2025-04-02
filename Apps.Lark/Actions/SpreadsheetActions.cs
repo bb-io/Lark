@@ -40,7 +40,7 @@ namespace Apps.Lark.Actions
 
             request.AddJsonBody(body);
 
-            return  await larkClient.ExecuteWithErrorHandling<CreateSpreadsheetResponse>(request);
+            return await larkClient.ExecuteWithErrorHandling<CreateSpreadsheetResponse>(request);
         }
 
         [Action("Find cells", Description = "Find cells in a spreadsheet by a query and optional range")]

@@ -25,4 +25,10 @@
         public string Name { get; set; }
         public string Token { get; set; }
     }
+
+    public class Sheet
+    {
+        public string Name { get; set; }
+        public string Token { get; set; }
+    }
 }

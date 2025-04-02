@@ -79,9 +79,9 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var result = await actions.DeleteRowsOrColumns(new DeleteRowsOrColumnsRequest
             {
-               
-                StartIndex=6,
-                EndIndex=25,
+
+                StartIndex = 6,
+                EndIndex = 25,
                 InsertMode = "ROW"
             }, new SpreadsheetsRequest
             {
@@ -98,8 +98,8 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var updateRequest = new UpdateRowsRequest
             {
-                Range = "C10:F14",   
-                    Values = new List<string>
+                Range = "C10:F14",
+                Values = new List<string>
             {
                 "Edit2, 1, http://www.xx.com",
                 "Edit2, 12, 18, me@HelloWorld.1com",

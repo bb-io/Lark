@@ -1,4 +1,5 @@
-﻿using Apps.Lark.Models.Response;
+﻿using Apps.Appname.Api;
+using Apps.Lark.Models.Response;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
@@ -8,7 +9,7 @@ public class FolderDataSourceHandler(InvocationContext invocationContext) : Invo
 {
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-        var larkClient = new Apps.Appname.Api.LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+        var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
 
         var folders = await GetFoldersRecursively(larkClient, null, cancellationToken);
 
@@ -17,10 +18,10 @@ public class FolderDataSourceHandler(InvocationContext invocationContext) : Invo
             folders = folders.Where(f => f.Name.Contains(context.SearchString)).ToList();
         }
 
-        return folders.ToDictionary(f => f.Name, f => f.Token);
+        return folders.ToDictionary(f => f.Token, f => f.Name);
     }
 
-    private async Task<List<Folder>> GetFoldersRecursively(Apps.Appname.Api.LarkClient larkClient, string folderToken, CancellationToken cancellationToken)
+    private async Task<List<Folder>> GetFoldersRecursively(LarkClient larkClient, string folderToken, CancellationToken cancellationToken)
     {
         var folders = new List<Folder>();
 

@@ -3,13 +3,7 @@
 namespace Apps.Lark.Models.Request
 {
     public class FindCellsRequest
-    {
-        [Display("Spreadsheet ID")]
-        public string SpreadsheetToken { get; set; }
-
-        [Display("Sheet ID")]
-        public string SheetId { get; set; }
-
+    {   
         [Display("Range")]
         public string Range { get; set; }
 

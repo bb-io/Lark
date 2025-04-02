@@ -1,17 +1,14 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Lark.DataSourceHandlers.Enum;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 
 namespace Apps.Lark.Models.Request
 {
     public class AddRowsOrColumnsRequest
     {
-        [Display("Spreadsheet ID")]
-        public string SpreadsheetToken { get; set; }
-
-        [Display("Sheet ID")]
-        public string SheetId { get; set; }
-
         [Display("Insert mode")]
-        public string InsertMode { get; set; }//row , column
+        [StaticDataSource(typeof(ModeTypeHandler))]
+        public string InsertMode { get; set; }
 
         [Display("Number of rows/cells")]
         public int Length { get; set; }

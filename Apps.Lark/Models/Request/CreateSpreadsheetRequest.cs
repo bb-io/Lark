@@ -1,4 +1,6 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Appname.Handlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +15,7 @@ namespace Apps.Lark.Models.Request
         public string? SpreadsheetName { get; set; }
 
         [Display("Folder token")]
+        [DataSource(typeof(FolderDataSourceHandler))]
         public string? FolderToken { get; set; }
     }
 }

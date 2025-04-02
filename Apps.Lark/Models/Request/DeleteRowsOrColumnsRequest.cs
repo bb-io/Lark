@@ -1,4 +1,6 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Lark.DataSourceHandlers.Enum;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +11,8 @@ namespace Apps.Lark.Models.Request
 {
     public class DeleteRowsOrColumnsRequest
     {
-        [Display("Spreadsheet ID")]
-        public string SpreadsheetToken { get; set; }
-
-        [Display("Sheet ID")]
-        public string SheetId { get; set; }
-
         [Display("Delete mode")]
+        [StaticDataSource(typeof(ModeTypeHandler))]
         public string InsertMode { get; set; }
 
         [Display("Start index")]

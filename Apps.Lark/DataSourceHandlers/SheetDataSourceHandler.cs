@@ -1,60 +1,32 @@
 ﻿using Apps.Appname;
+using Apps.Appname.Api;
+using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
+using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using RestSharp;
 
 namespace Apps.Lark.DataSourceHandlers
 {
-    public class SheetDataSourceHandler(InvocationContext invocationContext) : Invocable(invocationContext), IAsyncDataSourceHandler
+    public class SheetDataSourceHandler : Invocable, IAsyncDataSourceHandler
     {
+        private readonly string _spreadsheetToken;
+
+        public SheetDataSourceHandler(InvocationContext invocationContext,
+        [ActionParameter] SpreadsheetsRequest input) : base(invocationContext)
+        {
+            _spreadsheetToken = input.SpreadsheetToken;
+        }
         public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
         {
-            var larkClient = new Apps.Appname.Api.LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+            var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
 
-            var sheets = await GetSheetsRecursively(larkClient, null, cancellationToken);
+            var request = new RestRequest($"/sheets/v3/spreadsheets/{_spreadsheetToken}/sheets/query", Method.Get);
+            var response = await larkClient.ExecuteWithErrorHandling<SheetsResponse>(request);
+            var sheets = response.Data.Sheets;
 
-            if (!string.IsNullOrEmpty(context.SearchString))
-            {
-                sheets = sheets.Where(s => s.Name.Contains(context.SearchString)).ToList();
-            }
-
-            return sheets.ToDictionary(s => s.Token, s => s.Name);
-        }
-
-        private async Task<List<Sheet>> GetSheetsRecursively(Apps.Appname.Api.LarkClient larkClient, string folderToken, CancellationToken cancellationToken)
-        {
-            var sheets = new List<Sheet>();
-
-            var request = new RestRequest("/drive/v1/files", Method.Get);
-            if (!string.IsNullOrEmpty(folderToken))
-            {
-                request.AddQueryParameter("folder_token", folderToken);
-            }
-
-            var response = await larkClient.ExecuteWithErrorHandling<DriveFilesResponse>(request);
-
-            if (response.Code == 0 && response.Data?.Files != null)
-            {
-                foreach (var file in response.Data.Files)
-                {
-                    if (file.Type == "sheet")
-                    {
-                        sheets.Add(new Sheet
-                        {
-                            Name = file.Name,
-                            Token = file.Token
-                        });
-                    }
-                    else if (file.Type == "folder")
-                    {
-                        var subSheets = await GetSheetsRecursively(larkClient, file.Token, cancellationToken);
-                        sheets.AddRange(subSheets);
-                    }
-                }
-            }
-
-            return sheets;
+            return sheets.ToDictionary(sheet => sheet.SheetId , sheet => sheet.Title);
         }
     }
 }

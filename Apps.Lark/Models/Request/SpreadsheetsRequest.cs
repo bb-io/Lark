@@ -7,7 +7,7 @@ namespace Apps.Lark.Models.Request
     public class SpreadsheetsRequest
     {
         [Display("Spreadsheet ID")]
-        [DataSource(typeof(SheetDataSourceHandler))]
+        [DataSource(typeof(SpreadsheetDataSourceHandler))]
         public string SpreadsheetToken { get; set; }
 
         [Display("Sheet ID")]

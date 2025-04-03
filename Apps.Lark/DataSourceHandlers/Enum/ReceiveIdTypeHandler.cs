@@ -10,10 +10,10 @@ public class ReceiveIdTypeHandler : IStaticDataSourceItemHandler
     }
     protected Dictionary<string, string> EnumValues => new()
     {
-            {"open_id", "Open ID"},
+            //{"open_id", "Open ID"},
             {"user_id", "User ID"},
-            {"union_id", "Union ID"},
-            {"email", "Email"},
+            //{"union_id", "Union ID"},
+            //{"email", "Email"},
             {"chat_id", "Chat ID"}
     };
 }

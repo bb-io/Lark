@@ -11,6 +11,7 @@ namespace Apps.Lark.Models.Request
         public string SpreadsheetToken { get; set; }
 
         [Display("Sheet ID")]
+        [DataSource(typeof(SheetDataSourceHandler))]
         public string SheetId { get; set; }
     }
 }

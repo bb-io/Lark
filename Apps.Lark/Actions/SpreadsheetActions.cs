@@ -4,6 +4,8 @@ using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
@@ -195,6 +197,80 @@ namespace Apps.Lark.Actions
             var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Range}", Method.Get);
 
             return await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
+        }
+
+        [Action("Download Spreadsheet", Description = "Downloads a spreadsheet file by exporting it from Lark Drive.")]
+        public async Task<FileResponse> DownloadSpreadsheet([ActionParameter] DownloadSpreadsheetRequest input)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var ticket = await CreateExportTask(larkClient, input.SpreadsheetToken);
+
+            var exportResult = await GetExportTaskResult(larkClient, ticket, input.SpreadsheetToken);
+            if (exportResult.JobStatus != 0)
+            {
+                throw new PluginApplicationException($"Export task failed: {exportResult.JobErrorMsg}");
+            }
+
+            var file = await DownloadFile(larkClient, exportResult.FileToken, exportResult.FileName, exportResult.FileExtension);
+
+            return new FileResponse { File = file };
+        }
+        public async Task<string> CreateExportTask(LarkClient larkClient, string sheetToken)
+        {
+            var createTaskRequest = new RestRequest("/drive/v1/export_tasks", Method.Post);
+            createTaskRequest.AddHeader("Content-Type", "application/json");
+
+            var createTaskBody = new
+            {
+                file_extension = "xlsx",
+                token = sheetToken,
+                type = "sheet"
+            };
+            createTaskRequest.AddJsonBody(createTaskBody);
+
+            var createTaskResponse = await larkClient.ExecuteWithErrorHandling<CreateExportTaskResponse>(createTaskRequest);
+            if (createTaskResponse.Data == null || string.IsNullOrWhiteSpace(createTaskResponse.Data.Ticket))
+            {
+                throw new PluginApplicationException("Failed to create export task.");
+            }
+            return createTaskResponse.Data.Ticket;
+        }
+
+        public async Task<ExportTaskResult> GetExportTaskResult(LarkClient larkClient, string ticket, string sheetToken)
+        {
+            var getTaskResultRequest = new RestRequest($"/drive/v1/export_tasks/{ticket}?token={sheetToken}", Method.Get);
+
+            var getTaskResultResponse = await larkClient.ExecuteWithErrorHandling<ExportTaskResultResponse>(getTaskResultRequest);
+            if (getTaskResultResponse.Data == null || getTaskResultResponse.Data.Result == null)
+            {
+                throw new PluginApplicationException("Failed to get export task result.");
+            }
+            return getTaskResultResponse.Data.Result;
+        }
+
+        public async Task<FileReference> DownloadFile(LarkClient larkClient, string fileToken, string fileName, string fileExtension)
+        {
+            var downloadRequest = new RestRequest($"/drive/v1/files/{fileToken}/download", Method.Get);
+            var downloadResponse = await larkClient.ExecuteWithErrorHandling<byte[]>(downloadRequest);
+
+            if (downloadResponse == null)
+            {
+                throw new PluginMisconfigurationException("Failed to download file.");
+            }
+
+            FileReference fileReference;
+
+            using (var memoryStream = new MemoryStream(downloadResponse))
+            {
+                fileReference = await fileManagementClient.UploadAsync(
+                    memoryStream,
+                    "application/octet-stream",
+                    $"{fileName}.{fileExtension}"
+                );
+            }
+
+            return fileReference;
         }
 
     }

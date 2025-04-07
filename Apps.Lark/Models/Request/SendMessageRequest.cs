@@ -1,7 +1,5 @@
-﻿using Apps.Appname.Handlers.Static;
-using Apps.Lark.DataSourceHandlers;
+﻿using Apps.Lark.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Lark.Models.Request

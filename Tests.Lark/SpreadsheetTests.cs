@@ -1,4 +1,5 @@
-﻿using Apps.Lark.Actions;
+﻿using Apps.Appname.Api;
+using Apps.Lark.Actions;
 using Apps.Lark.Models.Request;
 using Tests.Lark.Base;
 
@@ -183,6 +184,44 @@ namespace Tests.Lark
                 SheetId = "a8685d",
             });
             Console.WriteLine(result.Msg);
+            Assert.IsNotNull(result);
+        }
+
+
+        [TestMethod]
+        public async Task CreateExportTask_IsSucces()
+        {
+            var actions = new SpreadsheetActions(InvocationContext, FileManager);
+            var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+            var sheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh";
+
+            var result = await actions.CreateExportTask(client, sheetToken);
+            Console.WriteLine(result);
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task GetExportTaskResult_IsSucces()
+        {
+            var actions = new SpreadsheetActions(InvocationContext, FileManager);
+            var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+            var sheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh";
+            var ticket = "7490603441450926114";
+
+            var result = await actions.GetExportTaskResult(client, ticket, sheetToken);
+            Console.WriteLine(result.FileToken);
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task DownloadFile_IsSucces()
+        {
+            var actions = new SpreadsheetActions(InvocationContext, FileManager);
+            var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+            var fileToken = "HvW7b58Dro9ptWx7GCMj8vRlpxe";
+
+            var result = await actions.DownloadFile(client, fileToken, "TestSpreadsheetA", "xlsx");
+            //Console.WriteLine($"{result.Name} - {result.Size}");
             Assert.IsNotNull(result);
         }
     }

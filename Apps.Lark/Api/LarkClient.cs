@@ -26,9 +26,21 @@ public class LarkClient : BlackBirdRestClient
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-        var error = JsonConvert.DeserializeObject(response.Content);
-
-        throw new PluginApplicationException(error.ToString());
+        ErrorResponse errorResponse = null;
+        try
+        {
+            errorResponse = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+            string errorMessage = $"Error {errorResponse.Code}: {errorResponse.Msg}";
+            if (errorResponse.Error != null)
+            {
+                errorMessage += $", Details: {JsonConvert.SerializeObject(errorResponse.Error)}";
+            }
+            return new PluginApplicationException(errorMessage);
+        }
+        catch (Exception)
+        {
+            return new PluginApplicationException("An error occurred: " + response.ErrorException + response.StatusCode);
+        }
     }
     public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {

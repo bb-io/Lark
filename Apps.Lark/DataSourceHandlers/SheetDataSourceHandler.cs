@@ -26,7 +26,7 @@ namespace Apps.Lark.DataSourceHandlers
             var response = await larkClient.ExecuteWithErrorHandling<SheetsResponse>(request);
             var sheets = response.Data.Sheets;
 
-            return sheets.ToDictionary(sheet => sheet.SheetId , sheet => sheet.Title);
+            return sheets.ToDictionary(sheet => sheet.SheetId, sheet => sheet.Title);
         }
     }
 }

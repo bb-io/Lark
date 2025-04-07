@@ -1,13 +1,8 @@
-﻿using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.Lark.Webhooks.Bridge;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
-using Blackbird.Applications.Sdk.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Apps.Lark.Webhooks.Bridge;
 
 namespace Apps.Lark.Webhooks.Handlers.Base
 {

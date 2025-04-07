@@ -1,13 +1,7 @@
-﻿using Apps.Appname.Api;
-using Apps.Appname.Constants;
+﻿using Apps.Appname.Constants;
 using Apps.Lark.Webhooks.Pyload;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using RestSharp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Lark.Webhooks.Bridge
 {

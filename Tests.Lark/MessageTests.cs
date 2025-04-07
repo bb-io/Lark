@@ -67,7 +67,7 @@ public class MessageTests : TestBase
         var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.EditMessage(new EditMessageRequest
         {
-            MessageId = "om_ad0052c66a210f38e360f497ee0cc6ac",
+            MessageId = "om_92fe875edad9c8bd466bed399d6fab2b",
             MessageText = "Hello, World! Edited"
         });
 

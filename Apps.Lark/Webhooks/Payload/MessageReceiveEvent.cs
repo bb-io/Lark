@@ -1,11 +1,4 @@
-﻿using Apps.Lark.Models.Response;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Collections.Specialized.BitVector32;
+﻿using Newtonsoft.Json;
 
 namespace Apps.Lark.Webhooks.Payload
 {
@@ -81,7 +74,7 @@ namespace Apps.Lark.Webhooks.Payload
         public string UserAgent { get; set; }
     }
 
-     public class Mention
+    public class Mention
     {
         [JsonProperty("key")]
         public string Key { get; set; }

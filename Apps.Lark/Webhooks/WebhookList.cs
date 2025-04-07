@@ -49,7 +49,7 @@ namespace Apps.Lark.Webhooks
             };
         }
 
-        [Webhook("On user added to group", typeof(MessageAddedReactionHandler), Description = "This event is triggered when a new user joins a group (including topic group).")]
+        [Webhook("On user added to group", typeof(UsersJoinTheGroupHandler), Description = "This event is triggered when a new user joins a group (including topic group).")]
         public async Task<WebhookResponse<UserAddedToGroupEvent>> OnUserAdded(WebhookRequest webhookRequest)
         {
             var payload = JsonConvert.DeserializeObject<BasePayload<UserAddedToGroupEvent>>(webhookRequest.Body.ToString());
@@ -66,7 +66,7 @@ namespace Apps.Lark.Webhooks
         }
 
 
-        [Webhook("On file edited", typeof(MessageAddedReactionHandler), Description = "This event is triggered when a file is edited.")]
+        [Webhook("On file edited", typeof(FileEditedHandler), Description = "This event is triggered when a file is edited.")]
         public async Task<WebhookResponse<FileEditedEvent>> OnFileEdited(WebhookRequest webhookRequest)
         {
             var payload = JsonConvert.DeserializeObject<BasePayload<FileEditedEvent>>(webhookRequest.Body.ToString());

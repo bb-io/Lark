@@ -1,22 +1,25 @@
-﻿using Apps.Appname.Handlers.Static;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
+﻿using Apps.Lark.DataSourceHandlers;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Lark.Models.Request
 {
     public class SendFileRequest
     {
-        public string ReceiveId { get; set; }
 
-        [StaticDataSource(typeof(ReceiveIdTypeHandler))]
-        public string ReceiveIdType { get; set; }
+        [Display("Chats ID")]
+        [DataSource(typeof(ChatDataSourceHandler))]
+        public string? ChatsId { get; set; }
 
+        [Display("User ID")]
+        [DataSource(typeof(UsersDataSourceHandler))]
+        public string? UserId { get; set; }
+
+        [Display("File")]
         public FileReference FileContent { get; set; }
 
+        [Display("File name")]
         public string FileName { get; set; }
-
-        public string ContentType { get; set; }
-
-        public string FileType { get; set; }
     }
 }

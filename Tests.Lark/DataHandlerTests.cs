@@ -58,4 +58,38 @@ public class DataHandlerTests : TestBase
 
         Assert.IsTrue(result.Count() > 0);
     }
+
+    [TestMethod]
+    public async Task ChatDataHandler_IsSuccess()
+    {
+
+        var handler = new ChatDataSourceHandler(InvocationContext);
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task UsersDataHandler_IsSuccess()
+    {
+
+        var handler = new UsersDataSourceHandler(InvocationContext);
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
 }

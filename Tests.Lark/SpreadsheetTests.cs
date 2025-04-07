@@ -56,7 +56,7 @@ namespace Tests.Lark
             Assert.IsNotNull(result);
         }
         [TestMethod]
-        public async Task AddRowsOrColumns_IsSucces()
+        public async Task AddColumns_IsSucces()
         {
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var result = await actions.AddRowsOrColumns(new AddRowsOrColumnsRequest
@@ -80,8 +80,8 @@ namespace Tests.Lark
             var result = await actions.DeleteRowsOrColumns(new DeleteRowsOrColumnsRequest
             {
 
-                StartIndex = 6,
-                EndIndex = 25,
+                StartIndex = 1,
+                EndIndex = 30,
                 InsertMode = "ROW"
             }, new SpreadsheetsRequest
             {

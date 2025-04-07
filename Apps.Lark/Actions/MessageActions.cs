@@ -3,6 +3,7 @@ using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
@@ -18,17 +19,38 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
     [Action("Send message", Description = "Send message")]
     public async Task<SendMessageResponse> SendMessage([ActionParameter] SendMessageRequest input)
     {
-        var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+        if (string.IsNullOrWhiteSpace(input.ChatsId) && string.IsNullOrWhiteSpace(input.UserId))
+        {
+            throw new PluginMisconfigurationException("Either Chat Id or User Id must be provided. Please check the input");
+        }
 
+        if (!string.IsNullOrWhiteSpace(input.ChatsId) && !string.IsNullOrWhiteSpace(input.UserId))
+        {
+            throw new PluginMisconfigurationException("Only one of Chat Id or User Id must be provided, not both. Please check the input");
+        }
+
+        string receiveId, receiveIdType;
+        if (!string.IsNullOrWhiteSpace(input.ChatsId))
+        {
+            receiveId = input.ChatsId;
+            receiveIdType = "chat_id";
+        }
+        else
+        {
+            receiveId = input.UserId;
+            receiveIdType = "user_id";
+        }
+
+        var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/im/v1/messages", Method.Post);
 
-        request.AddQueryParameter("receive_id_type", input.ReceiveIdType);
+        request.AddQueryParameter("receive_id_type", receiveIdType);
 
         var contentJson = JsonConvert.SerializeObject(new { text = input.MessageText });
 
         request.AddJsonBody(new
         {
-            receive_id = input.ReceiveId,
+            receive_id = receiveId,
             msg_type = "text",
             content = contentJson
         });
@@ -40,13 +62,33 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
     [Action("Send file", Description = "Send file message")]
     public async Task<SendMessageResponse> SendFile([ActionParameter] SendFileRequest input)
     {
+        if (string.IsNullOrWhiteSpace(input.ChatsId) && string.IsNullOrWhiteSpace(input.UserId))
+        {
+            throw new Exception("Either Chat Id or User Id must be provided. Please check the input");
+        }
+        if (!string.IsNullOrWhiteSpace(input.ChatsId) && !string.IsNullOrWhiteSpace(input.UserId))
+        {
+            throw new Exception("Only one of Chat Id or User Id must be provided, not both. Please check the input");
+        }
+
+        string receiveId, receiveIdType;
+        if (!string.IsNullOrWhiteSpace(input.ChatsId))
+        {
+            receiveId = input.ChatsId;
+            receiveIdType = "chat_id";
+        }
+        else
+        {
+            receiveId = input.UserId;
+            receiveIdType = "user_id";
+        }
+
         var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
         await using var fileStream = await FileManagementClient.DownloadAsync(input.FileContent);
         using var memoryStream = new MemoryStream();
         await fileStream.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
-
 
         string uploadFileType, messageType;
         if (input.FileContent.ContentType.StartsWith("image/"))
@@ -95,13 +137,9 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
 
         var fileBytes = memoryStream.ToArray();
         var uploadRequest = new RestRequest("/im/v1/files", Method.Post);
-
         uploadRequest.AddHeader("Content-Type", "multipart/form-data");
-
         uploadRequest.AddParameter("file_type", uploadFileType);
         uploadRequest.AddParameter("file_name", input.FileName);
-
-
         uploadRequest.AddFile("file", fileBytes, input.FileContent.Name, input.FileContent.ContentType);
 
         var uploadResponse = await larkClient.ExecuteWithErrorHandling<UploadFileResponse>(uploadRequest);
@@ -116,16 +154,17 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         };
 
         var messageRequest = new RestRequest("/im/v1/messages", Method.Post);
-        messageRequest.AddQueryParameter("receive_id_type", input.ReceiveIdType);
+        messageRequest.AddQueryParameter("receive_id_type", receiveIdType);
         messageRequest.AddJsonBody(new
         {
-            receive_id = input.ReceiveId,
+            receive_id = receiveId,
             msg_type = messageType,
             content = contentJson
         });
 
         var messageResponse = await larkClient.ExecuteWithErrorHandling<SendMessageResponse>(messageRequest);
         return messageResponse;
+
     }
 
     [Action("Get message", Description = "Get message by message_id")]

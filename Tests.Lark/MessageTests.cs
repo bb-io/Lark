@@ -14,9 +14,9 @@ public class MessageTests : TestBase
         var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.SendMessage(new SendMessageRequest
         {
-            ReceiveIdType = "user_id",
+            ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
+            //UserId = "f4c212e7",
             MessageText = "Hello, World!",
-            ReceiveId = "f4c212e7"
         });
 
         Console.WriteLine(result.Msg);
@@ -29,10 +29,8 @@ public class MessageTests : TestBase
         var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.SendFile(new SendFileRequest
         {
-            //ReceiveIdType = "user_id",
-            //ReceiveId = "f4c212e7",
-            ReceiveIdType = "chat_id",
-            ReceiveId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
+            //ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
+            UserId = "f4c212e7",
             FileContent = new FileReference
             {
                 Name = "Test_1.xlsx",

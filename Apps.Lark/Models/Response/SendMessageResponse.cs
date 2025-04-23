@@ -3,6 +3,27 @@ using Newtonsoft.Json;
 
 namespace Apps.Lark.Models.Response
 {
+    public class SendMessageResult
+    {
+        [Display("Message ID")]
+        public string MessageId { get; set; }
+
+        [Display("Chat ID")]
+        public string ChatId { get; set; }
+
+        [Display("Content")]
+        public string Content { get; set; }
+
+        [Display("Create time")]
+        public DateTime CreateTime { get; set; }
+
+        [Display("Update time")]
+        public DateTime UpdateTime { get; set; }
+
+        [Display("Sender")]
+        public Sender Sender { get; set; }
+    }
+
     public class SendMessageResponse
     {
         [JsonProperty("code")]
@@ -25,8 +46,7 @@ namespace Apps.Lark.Models.Response
         public string ChatId { get; set; }
 
         [JsonProperty("create_time")]
-        [Display("Create time")]
-        public string CreateTime { get; set; }
+        private long RawCreateTime { get; set; }
 
         [JsonProperty("deleted")]
         public bool Deleted { get; set; }
@@ -43,11 +63,20 @@ namespace Apps.Lark.Models.Response
         public Sender Sender { get; set; }
 
         [JsonProperty("update_time")]
-        [Display("Update time")]
-        public string UpdateTime { get; set; }
+        private long RawUpdateTime { get; set; }
 
         [JsonProperty("updated")]
         public bool Updated { get; set; }
+
+        [Display("Create time")]
+        public DateTime CreateTimeUtc => DateTimeOffset
+       .FromUnixTimeMilliseconds(RawCreateTime)
+       .UtcDateTime;
+
+        [Display("Update time")]
+        public DateTime UpdateTimeUtc => DateTimeOffset
+            .FromUnixTimeMilliseconds(RawUpdateTime)
+            .UtcDateTime;
     }
 
     public class Body

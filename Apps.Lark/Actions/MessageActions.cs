@@ -7,6 +7,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RestSharp;
 
 namespace Apps.Appname.Actions;
@@ -17,7 +18,7 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
     private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;
 
     [Action("Send message", Description = "Send message")]
-    public async Task<SendMessageResponse> SendMessage([ActionParameter] SendMessageRequest input)
+    public async Task<SendMessageResult> SendMessage([ActionParameter] SendMessageRequest input)
     {
         if (string.IsNullOrWhiteSpace(input.ChatsId) && string.IsNullOrWhiteSpace(input.UserId))
         {
@@ -56,11 +57,19 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         });
 
         var response = await larkClient.ExecuteWithErrorHandling<SendMessageResponse>(request);
-        return response;
+        return new SendMessageResult
+        {
+            MessageId = response.Data.MessageId,
+            ChatId = response.Data.ChatId,
+            Content = response.Data.Body.Content,
+            CreateTime = response.Data.CreateTimeUtc,
+            UpdateTime = response.Data.UpdateTimeUtc,
+            Sender = response.Data.Sender
+        };
     }
 
     [Action("Send file", Description = "Send file message")]
-    public async Task<SendMessageResponse> SendFile([ActionParameter] SendFileRequest input)
+    public async Task<SendMessageResult> SendFile([ActionParameter] SendFileRequest input)
     {
         if (string.IsNullOrWhiteSpace(input.ChatsId) && string.IsNullOrWhiteSpace(input.UserId))
         {
@@ -163,23 +172,41 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         });
 
         var messageResponse = await larkClient.ExecuteWithErrorHandling<SendMessageResponse>(messageRequest);
-        return messageResponse;
+        return new SendMessageResult
+        {
+            MessageId = messageResponse.Data.MessageId,
+            ChatId = messageResponse.Data.ChatId,
+            Content = messageResponse.Data.Body.Content,        
+            CreateTime = messageResponse.Data.CreateTimeUtc,
+            UpdateTime = messageResponse.Data.UpdateTimeUtc,
+            Sender = messageResponse.Data.Sender
+        };
 
     }
 
     [Action("Get message", Description = "Get message by message_id")]
-    public async Task<GetMessageResponse> GetMessage([ActionParameter] GetMessageRequest input)
+    public async Task<GetMessageResult> GetMessage([ActionParameter] GetMessageRequest input)
     {
         var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
         var request = new RestRequest($"/im/v1/messages/{input.MessageId}", Method.Get);
 
         var response = await larkClient.ExecuteWithErrorHandling<GetMessageResponse>(request);
-        return response;
+        var item = response.Data.Items?.FirstOrDefault()
+                        ?? throw new PluginApplicationException("Message not found.");
+
+        return new GetMessageResult
+        {
+            Body = item.Body,
+            ChatId = item.ChatId,
+            CreateTime = item.CreateTimeUtc,
+            MessageId = item.MessageId,
+            Sender = item.Sender
+        };
     }
 
     [Action("Edit message", Description = "Edit an existing message")]
-    public async Task<SendMessageResponse> EditMessage([ActionParameter] EditMessageRequest input)
+    public async Task<SendMessageResult> EditMessage([ActionParameter] EditMessageRequest input)
     {
         var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
@@ -195,7 +222,15 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         });
 
         var response = await larkClient.ExecuteWithErrorHandling<SendMessageResponse>(request);
-        return response;
+        return new SendMessageResult
+        {
+            MessageId = response.Data.MessageId,
+            ChatId = response.Data.ChatId,
+            Content = response.Data.Body.Content,
+            CreateTime = response.Data.CreateTimeUtc,
+            UpdateTime = response.Data.UpdateTimeUtc,
+            Sender = response.Data.Sender
+        };
     }
 
 }

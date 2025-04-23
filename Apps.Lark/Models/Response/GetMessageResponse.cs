@@ -1,7 +1,26 @@
-﻿using Newtonsoft.Json;
+﻿using Blackbird.Applications.Sdk.Common;
+using Newtonsoft.Json;
 
 namespace Apps.Lark.Models.Response
 {
+    public class GetMessageResult
+    {
+        [Display("Chat ID")]
+        public string ChatId { get; set; }
+
+        [Display("Create time")]
+        public DateTime CreateTime { get; set; }
+
+        [Display("Message ID")]
+        public string MessageId { get; set; }
+
+        [Display("Sender")]
+        public GetMessageSender Sender { get; set; }
+
+        [Display("Body")]
+        public GetMessageBody Body { get; set; }
+    }
+
     public class GetMessageResponse
     {
         [JsonProperty("code")]
@@ -29,7 +48,20 @@ namespace Apps.Lark.Models.Response
         public string ChatId { get; set; }
 
         [JsonProperty("create_time")]
-        public string CreateTime { get; set; }
+        private long RawCreateTime { get; set; }
+
+        [JsonProperty("update_time")]
+        public long RawUpdateTime { get; set; }
+
+        [Display("Create time")]
+        public DateTime CreateTimeUtc => DateTimeOffset
+            .FromUnixTimeMilliseconds(RawCreateTime)
+            .UtcDateTime;
+
+        [Display("Update time")]
+        public DateTime UpdateTimeUtc => DateTimeOffset
+            .FromUnixTimeMilliseconds(RawUpdateTime)
+            .UtcDateTime;
 
         [JsonProperty("deleted")]
         public bool Deleted { get; set; }
@@ -41,10 +73,7 @@ namespace Apps.Lark.Models.Response
         public string MsgType { get; set; }
 
         [JsonProperty("sender")]
-        public GetMessageSender Sender { get; set; }
-
-        [JsonProperty("update_time")]
-        public string UpdateTime { get; set; }
+        public GetMessageSender Sender { get; set; } 
 
         [JsonProperty("updated")]
         public bool Updated { get; set; }

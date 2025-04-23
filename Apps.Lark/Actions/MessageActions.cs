@@ -149,8 +149,8 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         }
 
         var fileBytes = memoryStream.ToArray();
-        var uploadRequest = new RestRequest("/im/v1/files", Method.Post);
-        uploadRequest.AddHeader("Content-Type", "multipart/form-data");
+        var uploadRequest = new RestRequest("/im/v1/files", Method.Post){AlwaysMultipartFormData = true};
+        //uploadRequest.AddHeader("Content-Type", "multipart/form-data");
         uploadRequest.AddParameter("file_type", uploadFileType);
         uploadRequest.AddParameter("file_name", fileName);
         uploadRequest.AddFile("file", fileBytes, input.FileContent.Name, input.FileContent.ContentType);

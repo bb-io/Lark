@@ -3,6 +3,21 @@ using Newtonsoft.Json;
 
 namespace Apps.Lark.Models.Response
 {
+    public class CreateSpreadsheetResult
+    {
+        [Display("Spreadsheet ID")]
+        public string SpreadsheetId { get; set; }
+
+        [Display("Folder ID")]
+        public string FolderId { get; set; }
+
+        [Display("Title")]
+        public string Title { get; set; }
+
+        [Display("URL")]
+        public string Url { get; set; }
+    }
+
     public class CreateSpreadsheetResponse
     {
         [JsonProperty("code")]

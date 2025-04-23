@@ -38,7 +38,7 @@ Before you can connect you need to make sure that you have a Lark account  and y
 - **Add rows or columns** adds empty rows or columns to a spreadsheet
 - **Delete rows or columns** deletes rows or columns from a spreadsheet
 - **Insert rows** inserts rows into a spreadsheet. If there are existing rows, the new rows will be inserted before the existing rows
-- **Add or update rows/columns** adds or updates rows or columns in a spreadsheet.  If there are existing rows/columns, the new rows/columns will rewrite the existing one
+- **Add or update rows/columns** adds or updates rows or columns in a spreadsheet.  If there are existing rows/columns, the new rows/columns will rewrite the existing one. By default uses delimeter `,` to split the values.
 - **Get range cells values** gets the values of a range of cells in a spreadsheet by specified range
 
 ## Events

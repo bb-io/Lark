@@ -36,23 +36,8 @@ public class MessageTests : TestBase
             {
                 Name = "Test_1.xlsx",
                 ContentType = "application/vnd.ms-excel"
-            },
-            //FileName = "Test_1.xlsx"
+            }
         });
-
-        //var result = await actions.SendFile(new SendFileRequest
-        //{
-        //    ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
-        //    //UserId = "f4c212e7",
-        //    FileContent = new FileReference
-        //    {
-        //        Name = "Test3.png",
-        //        ContentType = "image/png"
-        //    },
-        //    FileName = "Test3.png"
-        //});
-
-
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
         Assert.IsNotNull(result);
     }

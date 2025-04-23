@@ -20,7 +20,7 @@ namespace Apps.Lark.Actions
 
 
         [Action("Create spreadsheet", Description = "Create spreadsheet")]
-        public async Task<CreateSpreadsheetResponse> CreateSpreadsheet([ActionParameter] CreateSpreadsheetRequest input)
+        public async Task<CreateSpreadsheetResult> CreateSpreadsheet([ActionParameter] CreateSpreadsheetRequest input)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
@@ -42,7 +42,16 @@ namespace Apps.Lark.Actions
 
             request.AddJsonBody(body);
 
-            return await larkClient.ExecuteWithErrorHandling<CreateSpreadsheetResponse>(request);
+            var raw = await larkClient.ExecuteWithErrorHandling<CreateSpreadsheetResponse>(request);
+            var sp = raw.Data.Spreadsheet;
+
+            return new CreateSpreadsheetResult
+            {
+                SpreadsheetId = sp.SpreadsheetToken,
+                FolderId = sp.FolderToken,
+                Title = sp.Title,
+                Url = sp.Url
+            };
         }
 
         [Action("Find cells", Description = "Find cells in a spreadsheet by a query and optional range")]

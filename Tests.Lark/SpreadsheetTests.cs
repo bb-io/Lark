@@ -1,6 +1,7 @@
 ﻿using Apps.Appname.Api;
 using Apps.Lark.Actions;
 using Apps.Lark.Models.Request;
+using Newtonsoft.Json;
 using Tests.Lark.Base;
 
 namespace Tests.Lark
@@ -17,8 +18,7 @@ namespace Tests.Lark
                 SpreadsheetName = "Test_new21",
                 FolderToken = "BjPQfjg2mlp76MdwnmPjX4jrpRh"
             });
-            Console.WriteLine(result.Msg);
-            Console.WriteLine(result.Data.Spreadsheet.Url);
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
             Assert.IsNotNull(result);
         }
 
@@ -36,7 +36,7 @@ namespace Tests.Lark
                 SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
                 SheetId = "a8685d",
             });
-            Console.WriteLine(result.Msg);
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
             Assert.IsNotNull(result);
         }
 

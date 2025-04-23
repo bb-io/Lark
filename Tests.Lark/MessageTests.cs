@@ -30,14 +30,14 @@ public class MessageTests : TestBase
         var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.SendFile(new SendFileRequest
         {
-            ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
-            //UserId = "f4c212e7",
+            //ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
+            UserId = "f4c212e7",
             FileContent = new FileReference
             {
-                Name = "Test_1.xlsx",
-                ContentType = "application/vnd.ms-excel"
+                Name = "Test2.txt",
+                ContentType = "application/plain"
             },
-            FileName = "Test_1.xlsx"
+            //FileName = "Test_1.xlsx"
         });
 
         //var result = await actions.SendFile(new SendFileRequest

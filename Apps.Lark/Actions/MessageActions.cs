@@ -73,12 +73,16 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
     {
         if (string.IsNullOrWhiteSpace(input.ChatsId) && string.IsNullOrWhiteSpace(input.UserId))
         {
-            throw new Exception("Either Chat Id or User Id must be provided. Please check the input");
+            throw new PluginMisconfigurationException("Either Chat Id or User Id must be provided. Please check the input");
         }
         if (!string.IsNullOrWhiteSpace(input.ChatsId) && !string.IsNullOrWhiteSpace(input.UserId))
         {
-            throw new Exception("Only one of Chat Id or User Id must be provided, not both. Please check the input");
+            throw new PluginMisconfigurationException("Only one of Chat Id or User Id must be provided, not both. Please check the input");
         }
+
+        var fileName = string.IsNullOrWhiteSpace(input.FileName)
+       ? input.FileContent.Name
+       : input.FileName;
 
         string receiveId, receiveIdType;
         if (!string.IsNullOrWhiteSpace(input.ChatsId))
@@ -148,7 +152,7 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         var uploadRequest = new RestRequest("/im/v1/files", Method.Post);
         uploadRequest.AddHeader("Content-Type", "multipart/form-data");
         uploadRequest.AddParameter("file_type", uploadFileType);
-        uploadRequest.AddParameter("file_name", input.FileName);
+        uploadRequest.AddParameter("file_name", fileName);
         uploadRequest.AddFile("file", fileBytes, input.FileContent.Name, input.FileContent.ContentType);
 
         var uploadResponse = await larkClient.ExecuteWithErrorHandling<UploadFileResponse>(uploadRequest);

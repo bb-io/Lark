@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Product>Lark [Beta]</Product>
+        <Description>Lark's comprehensive and in-depth open capabilities serve as a hub of information and an entry point for businesses</Description>
+        <Version>1.0.1</Version>
+        <AssemblyName>Apps.Lark</AssemblyName>
+    </PropertyGroup>
+
+	<ItemGroup>
+		<EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png"></EmbeddedResource>
+	</ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.11.0" />
+        <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.25" />
+    </ItemGroup>
+
+</Project>

@@ -34,8 +34,8 @@ public class MessageTests : TestBase
             UserId = "f4c212e7",
             FileContent = new FileReference
             {
-                Name = "Test2.txt",
-                ContentType = "application/plain"
+                Name = "Test_1.xlsx",
+                ContentType = "application/vnd.ms-excel"
             },
             //FileName = "Test_1.xlsx"
         });

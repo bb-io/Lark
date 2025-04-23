@@ -80,9 +80,8 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
             throw new PluginMisconfigurationException("Only one of Chat Id or User Id must be provided, not both. Please check the input");
         }
 
-        var fileName = string.IsNullOrWhiteSpace(input.FileName)
-       ? input.FileContent.Name
-       : input.FileName;
+        var fileName = input.FileContent.Name;
+        var extension = Path.GetExtension(fileName)?.ToLowerInvariant() ?? "";
 
         string receiveId, receiveIdType;
         if (!string.IsNullOrWhiteSpace(input.ChatsId))
@@ -101,7 +100,7 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
         await using var fileStream = await FileManagementClient.DownloadAsync(input.FileContent);
         using var memoryStream = new MemoryStream();
         await fileStream.CopyToAsync(memoryStream);
-        memoryStream.Position = 0;
+        var fileBytes = memoryStream.ToArray();
 
         string uploadFileType, messageType;
         if (input.FileContent.ContentType.StartsWith("image/"))
@@ -119,38 +118,34 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
             uploadFileType = "opus";
             messageType = "audio";
         }
-        else if (input.FileContent.ContentType == "application/pdf")
-        {
-            uploadFileType = "pdf";
-            messageType = "file";
-        }
-        else if (input.FileContent.ContentType == "application/msword" ||
-                 input.FileContent.ContentType.Contains("wordprocessingml.document"))
-        {
-            uploadFileType = "doc";
-            messageType = "file";
-        }
-        else if (input.FileContent.ContentType == "application/vnd.ms-excel" ||
-                 input.FileContent.ContentType.Contains("spreadsheetml.sheet"))
-        {
-            uploadFileType = "xls";
-            messageType = "file";
-        }
-        else if (input.FileContent.ContentType == "application/vnd.ms-powerpoint" ||
-                 input.FileContent.ContentType.Contains("presentationml.presentation"))
-        {
-            uploadFileType = "ppt";
-            messageType = "file";
-        }
         else
         {
-            uploadFileType = "stream";
             messageType = "file";
+            switch (extension)
+            {
+                case ".pdf":
+                    uploadFileType = "pdf";
+                    break;
+                case ".doc":
+                case ".docx":
+                    uploadFileType = "doc";
+                    break;
+                case ".xls":
+                case ".xlsx":
+                    uploadFileType = "xls";
+                    break;
+                case ".ppt":
+                case ".pptx":
+                    uploadFileType = "ppt";
+                    break;
+                default:
+                    uploadFileType = "stream";
+                    break;
+            }
         }
 
-        var fileBytes = memoryStream.ToArray();
+        
         var uploadRequest = new RestRequest("/im/v1/files", Method.Post){AlwaysMultipartFormData = true};
-        //uploadRequest.AddHeader("Content-Type", "multipart/form-data");
         uploadRequest.AddParameter("file_type", uploadFileType);
         uploadRequest.AddParameter("file_name", fileName);
         uploadRequest.AddFile("file", fileBytes, input.FileContent.Name, input.FileContent.ContentType);

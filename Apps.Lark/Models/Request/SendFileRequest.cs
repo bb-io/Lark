@@ -18,8 +18,5 @@ namespace Apps.Lark.Models.Request
 
         [Display("File")]
         public FileReference FileContent { get; set; }
-
-        [Display("File name")]
-        public string FileName { get; set; }
     }
 }

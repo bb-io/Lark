@@ -43,7 +43,10 @@ Before you can connect you need to make sure that you have a Lark account  and y
 
 ## Events
 
-**Coming soon*
+- **On message received** triggers when a message is received in a Lark channel or directly to a user
+- **On reaction added** triggers when a reaction is added to a message in a Lark channel or directly to a user
+- **On user added to group** triggers when a user is added to a group
+- **On file edited** triggers when a file is edited in a Lark channel or directly to a user
 
 
 ## Feedback

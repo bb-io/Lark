@@ -9,6 +9,7 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using System;
 
 namespace Apps.Appname.Actions;
 
@@ -17,6 +18,19 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
 {
     private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;
 
+
+    [Action("Search chats",Description ="returnes list of chats")]
+    public async Task<ListChatsResponse> SearchChats()
+    {
+        var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+        var request = new RestRequest("/im/v1/chats?user_id_type=user_id", Method.Get);
+
+        var response = await larkClient.ExecuteWithErrorHandling<ChatsResponse>(request);
+
+        var chats = response.Data.Items;
+
+        return new ListChatsResponse { Chats = chats};
+    }
     [Action("Send message", Description = "Send message")]
     public async Task<SendMessageResult> SendMessage([ActionParameter] SendMessageRequest input)
     {

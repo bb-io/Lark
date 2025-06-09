@@ -20,7 +20,7 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
 
 
     [Action("Search chats",Description ="returnes list of chats")]
-    public async Task<ListChatsResponse> SearchChats()
+    public async Task<ListChatsResponse> SearchChats([ActionParameter] SearchChatsOptions options)
     {
         var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/im/v1/chats?user_id_type=user_id", Method.Get);
@@ -29,8 +29,23 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
 
         var chats = response.Data.Items;
 
-        return new ListChatsResponse { Chats = chats};
+        if (!string.IsNullOrWhiteSpace(options.UserID))
+        {
+            chats = chats
+                .Where(c => string.Equals(c.OwnerId, options.UserID, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.ChatID))
+        {
+            chats = chats
+                .Where(c => string.Equals(c.ChatId, options.ChatID, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        return new ListChatsResponse { Chats = chats };
     }
+
     [Action("Send message", Description = "Send message")]
     public async Task<SendMessageResult> SendMessage([ActionParameter] SendMessageRequest input)
     {

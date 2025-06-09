@@ -19,7 +19,7 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
     private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;
 
 
-    [Action("Search chats",Description ="returnes list of chats")]
+    [Action("Search chats",Description ="Returnes list of chats")]
     public async Task<ListChatsResponse> SearchChats([ActionParameter] SearchChatsOptions options)
     {
         var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);

@@ -68,4 +68,13 @@ public class MessageTests : TestBase
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
         Assert.IsNotNull(result);
     }
+
+    [TestMethod]
+    public async Task SearchChats_IsSucces()
+    {
+        var actions = new MessageActions(InvocationContext, FileManager);
+        var result = await actions.SearchChats();
+        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));      
+        Assert.IsNotNull(result);
+    }
 }

@@ -9,6 +9,7 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using System;
 
 namespace Apps.Appname.Actions;
 
@@ -16,6 +17,34 @@ namespace Apps.Appname.Actions;
 public class MessageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
 {
     private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;
+
+
+    [Action("Search chats",Description ="Returnes list of chats")]
+    public async Task<ListChatsResponse> SearchChats([ActionParameter] SearchChatsOptions options)
+    {
+        var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+        var request = new RestRequest("/im/v1/chats?user_id_type=user_id", Method.Get);
+
+        var response = await larkClient.ExecuteWithErrorHandling<ChatsResponse>(request);
+
+        var chats = response.Data.Items;
+
+        if (!string.IsNullOrWhiteSpace(options.UserID))
+        {
+            chats = chats
+                .Where(c => string.Equals(c.OwnerId, options.UserID, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        if (!string.IsNullOrWhiteSpace(options.ChatID))
+        {
+            chats = chats
+                .Where(c => string.Equals(c.ChatId, options.ChatID, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        return new ListChatsResponse { Chats = chats };
+    }
 
     [Action("Send message", Description = "Send message")]
     public async Task<SendMessageResult> SendMessage([ActionParameter] SendMessageRequest input)

@@ -13,14 +13,14 @@ namespace Apps.Lark.Actions
     public class UserActions(InvocationContext invocationContext) : Invocable(invocationContext)
     {
         [Action("Get user info", Description = "Gets information about user")]
-        public async Task<UserResponse> GetUserInfo([ActionParameter] GetUserRequest getUser)
+        public async Task<GetUserResponse> GetUserInfo([ActionParameter] GetUserRequest getUser)
         {
             var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new RestRequest($"/contact/v3/users/{getUser.UserId}?user_id_type=user_id", Method.Get);
 
             var response = await client.ExecuteWithErrorHandling<UserResponse>(request);
 
-            return response;
+            return new GetUserResponse { UserInfo=response.Data.User };
         }
     }
 }

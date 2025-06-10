@@ -12,7 +12,7 @@ namespace Apps.Lark.Actions
     [ActionList]
     public class UserActions(InvocationContext invocationContext) : Invocable(invocationContext)
     {
-        [Action("Get user info", Description = "Gets information about user")]
+        [Action("Get user information", Description = "Gets information about user")]
         public async Task<GetUserResponse> GetUserInfo([ActionParameter] GetUserRequest getUser)
         {
             var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);

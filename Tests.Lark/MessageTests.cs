@@ -17,7 +17,7 @@ public class MessageTests : TestBase
         {
             //ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
             UserId = "f4c212e7",
-            MessageText = "Hello, World!",
+            MessageText = "<at user_id=\"f4c212e7\"></at>, please check the document 2",
         });
 
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
@@ -73,7 +73,7 @@ public class MessageTests : TestBase
     public async Task SearchChats_IsSucces()
     {
         var actions = new MessageActions(InvocationContext, FileManager);
-        var result = await actions.SearchChats();
+        var result = await actions.SearchChats(new SearchChatsOptions { });
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));      
         Assert.IsNotNull(result);
     }

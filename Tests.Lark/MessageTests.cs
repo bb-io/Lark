@@ -15,9 +15,9 @@ public class MessageTests : TestBase
         var actions = new MessageActions(InvocationContext, FileManager);
         var result = await actions.SendMessage(new SendMessageRequest
         {
-            //ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
-            UserId = "f4c212e7",
-            MessageText = "<at user_id=\"f4c212e7\"></at>, please check the document 2",
+            ChatsId = "oc_912f03eb1c64f198fe78c8d54ee39dce",
+            //UserId = "f4c212e7",
+            MessageText = "<at user_id=\"\">Artem</at> hello",
         });
 
         Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));

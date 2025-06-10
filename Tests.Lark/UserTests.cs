@@ -1,0 +1,24 @@
+﻿using Apps.Lark.Actions;
+using Apps.Lark.Models.Request;
+using Newtonsoft.Json;
+using Tests.Lark.Base;
+
+namespace Tests.Lark
+{
+    [TestClass]
+    public class UserTests : TestBase
+    {
+        [TestMethod]
+        public async Task GetUserInfo_IsSuccess()
+        {
+            var actions = new UserActions(InvocationContext);
+            var result = await actions.GetUserInfo(new GetUserRequest
+            {
+                UserId = "f4c212e7"
+            });
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+            Assert.IsNotNull(result);
+        }
+
+    }
+}

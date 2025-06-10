@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Apps.Appname.Actions;
 
@@ -71,18 +72,26 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
             receiveIdType = "user_id";
         }
 
+        var mentionRegex = new Regex(@"<at user_id=""([^""]+)""([^>]*)>([^<]+)</at>");
+        var messageText = input.MessageText;
+
+        var formattedText = mentionRegex.Replace(messageText, m => $"<at user_id=\"{m.Groups[1].Value}\">{m.Groups[3].Value}</at>");
+
+        var content = new
+        {
+            text = formattedText
+        };
+
         var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/im/v1/messages", Method.Post);
 
         request.AddQueryParameter("receive_id_type", receiveIdType);
 
-        var contentJson = JsonConvert.SerializeObject(new { text = input.MessageText });
-
         request.AddJsonBody(new
         {
             receive_id = receiveId,
             msg_type = "text",
-            content = contentJson
+            content = JsonConvert.SerializeObject(content)
         });
 
         var response = await larkClient.ExecuteWithErrorHandling<SendMessageResponse>(request);

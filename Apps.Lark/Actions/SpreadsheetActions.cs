@@ -243,13 +243,19 @@ namespace Apps.Lark.Actions
         }
 
         [Action("Get range cells values", Description = "Retrieve values for a specified range of cells in a spreadsheet")]
-        public async Task<GetRangeCellsValuesResponse> GetRangeCellsValues([ActionParameter] GetRangeCellsValuesRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
+        public async Task<GetRangeResponse> GetRangeCellsValues([ActionParameter] GetRangeCellsValuesRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
             var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Range}", Method.Get);
 
-            return await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
+            var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
+
+            return new GetRangeResponse { MajorDimension=response.Data.ValueRange.MajorDimension,
+            Values=response.Data.ValueRange.Values, Range=response.Data.ValueRange.Range,
+                Revision = response.Data.ValueRange.Revision,
+                SpreadsheetToken = response.Data.SpreadsheetToken,
+            };
         }
 
 

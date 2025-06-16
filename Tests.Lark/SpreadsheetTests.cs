@@ -197,7 +197,7 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var updateRequest = new GetRangeCellsValuesRequest
             {
-                Range = "C1:C1"
+                Range = "C1:D14"
             };
 
             var result = await actions.GetRangeCellsValues(updateRequest, new SpreadsheetsRequest

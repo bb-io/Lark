@@ -14,7 +14,7 @@ namespace Apps.Lark.Polling
     public class PollingList(InvocationContext invocationContext) : Invocable(invocationContext)
     {
         [PollingEvent("On new rows added", "Triggered when new rows are added to the sheet")]
-        public async Task<PollingEventResponse<NewRowAddedMemory, IEnumerable<NewRowResult>>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request, 
+        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request, 
             [PollingEventParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
@@ -35,7 +35,7 @@ namespace Apps.Lark.Polling
                     Triggered = false
                 };
 
-                return new PollingEventResponse<NewRowAddedMemory, IEnumerable<NewRowResult>>
+                return new PollingEventResponse<NewRowAddedMemory, NewRowResult>
                 {
                     FlyBird = false,
                     Memory = request.Memory,
@@ -58,7 +58,7 @@ namespace Apps.Lark.Polling
                     {
                         RowIndex = i + 1,
                         RowValues = rowValues,
-                        Range = $"A{i + 1}:Z{i + 1}" 
+                        Range = $"A{i + 1}:Z{i + 1}"
                     };
                     newRowsList.Add(newRow);
                 }
@@ -69,21 +69,16 @@ namespace Apps.Lark.Polling
             memory.Triggered = newRowsList.Any();
 
 
-            var result = new List<NewRowResult>();
-            if (newRowsList.Any())
+            var newRowResult = new NewRowResult
             {
-                var newRowResult = new NewRowResult
-                {
-                    NewRows = newRowsList
-                };
-                result.Add(newRowResult);
-            }
+                NewRows = newRowsList.Any() ? newRowsList : new List<NewRow>()
+            };
 
-            return new PollingEventResponse<NewRowAddedMemory, IEnumerable<NewRowResult>>
+            return new PollingEventResponse<NewRowAddedMemory, NewRowResult>
             {
                 FlyBird = newRowsList.Any(),
                 Memory = memory,
-                Result = result
+                Result = newRowResult
             };
         }
     }

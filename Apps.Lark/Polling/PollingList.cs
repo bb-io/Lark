@@ -24,7 +24,7 @@ namespace Apps.Lark.Polling
             var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(values);
 
             int currentRowCount = response.Data?.ValueRange?.Values?.Count ?? 0;
-
+            string columnRange = ExtractColumnRange(response.Data?.ValueRange?.Range);
 
             if (request.Memory == null)
             {
@@ -58,7 +58,7 @@ namespace Apps.Lark.Polling
                     {
                         RowIndex = i + 1,
                         RowValues = rowValues,
-                        Range = $"A{i + 1}:Z{i + 1}"
+                        Range = $"{columnRange.Split(':')[0]}{i + 1}:{columnRange.Split(':')[1]}{i + 1}"
                     };
                     newRowsList.Add(newRow);
                 }
@@ -68,12 +68,9 @@ namespace Apps.Lark.Polling
             memory.LastPollingTime = DateTime.UtcNow;
             memory.Triggered = newRowsList.Any();
 
-
             var newRowResult = new NewRowResult
             {
-                NewRows = newRowsList.Any() ? newRowsList : new List<NewRow>(),
-                SpreadsheetToken = spreadsheet.SpreadsheetToken,
-                SheetId = spreadsheet.SheetId
+                NewRows = newRowsList.Any() ? newRowsList : new List<NewRow>()
             };
 
             return new PollingEventResponse<NewRowAddedMemory, NewRowResult>
@@ -82,6 +79,23 @@ namespace Apps.Lark.Polling
                 Memory = memory,
                 Result = newRowResult
             };
+        }
+
+        private string ExtractColumnRange(string fullRange)
+        {
+            if (string.IsNullOrEmpty(fullRange))
+                return "A:A";
+
+            var rangePart = fullRange.Contains("!") ? fullRange.Split('!')[1] : fullRange;
+
+            var columns = rangePart.Split(':');
+            if (columns.Length != 2)
+                return "A:A";
+
+            string startColumn = columns[0].TrimEnd('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
+            string endColumn = columns[1].TrimEnd('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
+
+            return $"{startColumn}:{endColumn}";
         }
     }
 }

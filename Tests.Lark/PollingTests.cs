@@ -22,7 +22,7 @@ namespace Tests.Lark
             {
                 Memory = new NewRowAddedMemory
                 {
-                    LastRowCount = 14,
+                    LastRowCount = 19,
                     LastPollingTime = DateTime.UtcNow.AddDays(-1),
                     Triggered = false
                 }

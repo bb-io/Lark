@@ -15,7 +15,7 @@ namespace Apps.Lark.Polling
     {
         [PollingEvent("On new rows added", "Triggered when new rows are added to the sheet")]
         public async Task<PollingEventResponse<NewRowAddedMemory, IEnumerable<NewRowResult>>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request, 
-            [ActionParameter] SpreadsheetsRequest spreadsheet)
+            [PollingEventParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 

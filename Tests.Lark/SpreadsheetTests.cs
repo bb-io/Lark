@@ -29,8 +29,8 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var result = await actions.FindCells(new FindCellsRequest
             {
-                Query = "Test",
-                Range = "A1:A1"
+                Query = "6",
+                Range = "C1:G17"
             }, new SpreadsheetsRequest
             {
                 SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
@@ -99,13 +99,13 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var updateRequest = new UpdateRowsRequest
             {
-                Range = "C10:F14",
+                Range = "C13:F17",
                 Values = new List<string>
             {
-                "Edit2, 1, http://www.xx.com",
-                "Edit2, 12, 18, me@HelloWorld.1com",
-                "Edit2, 13, 12, 6",
-                "Edit2, 14, 6, @Jack"
+                "Edit5, 1, http://www.xx.com",
+                "Edit25, 12, 18, me@HelloWorld.1com",
+                "Edit5, 13, 12, 6",
+                "Edit5, 14, 6, @Jack"
             }
             };
 
@@ -114,7 +114,28 @@ namespace Tests.Lark
                 SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
                 SheetId = "a8685d",
             });
-            Console.WriteLine(result.Msg);
+            var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(result);
+        }
+
+        [TestMethod]
+        public async Task UpdateCell_IsSucces()
+        {
+            var actions = new SpreadsheetActions(InvocationContext, FileManager);
+            var updateRequest = new UpdateSheetCell
+            {
+                SheetCell = "C1",
+                Value = "Edited from unit test call"
+            };
+
+            var result = await actions.UpdateSheetCell(updateRequest, new SpreadsheetsRequest
+            {
+                SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
+                SheetId = "a8685d"
+            });
+            var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
         }
 
@@ -124,13 +145,13 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var updateRequest = new UpdateRowsRequest
             {
-                Range = "A1:A4",
+                Range = "B1:C4",
                 Values = new List<string>
             {
-                "Edit2",
-                "Edit2",
-                "Edit2",
-                "Edit2"
+                "Edited by Artem",
+                "Edited by Artem",
+                "Edited by Artem",
+                "Edited by Artem"
             }
             };
 
@@ -139,7 +160,8 @@ namespace Tests.Lark
                 SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
                 SheetId = "a8685d",
             });
-            Console.WriteLine(result.Msg);
+            var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
         }
 
@@ -175,7 +197,7 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var updateRequest = new GetRangeCellsValuesRequest
             {
-                Range = "C10:F14"
+                Range = "C1:C1"
             };
 
             var result = await actions.GetRangeCellsValues(updateRequest, new SpreadsheetsRequest
@@ -183,7 +205,9 @@ namespace Tests.Lark
                 SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
                 SheetId = "a8685d",
             });
-            Console.WriteLine(result.Msg);
+
+            var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
         }
 
@@ -222,6 +246,27 @@ namespace Tests.Lark
 
             var result = await actions.DownloadFile(client, fileToken, "TestSpreadsheetA", "xlsx");
             //Console.WriteLine($"{result.Name} - {result.Size}");
+            Assert.IsNotNull(result);
+        }
+
+
+        [TestMethod]
+        public async Task GetCellValue_IsSucces()
+        {
+            var actions = new SpreadsheetActions(InvocationContext, FileManager);
+            var updateRequest = new GetSheetCell
+            {
+               Cell= "C1"
+            };
+
+            var result = await actions.GetSheetCell(updateRequest, new SpreadsheetsRequest
+            {
+                SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
+                SheetId = "a8685d",
+            });
+
+            var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+            Console.WriteLine(json);
             Assert.IsNotNull(result);
         }
     }

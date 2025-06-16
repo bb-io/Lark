@@ -44,7 +44,7 @@ public class DataHandlerTests : TestBase
     [TestMethod]
     public async Task SheetHandler_IsSuccess()
     {
-        var input = new SpreadsheetsRequest { SpreadsheetToken= "WuWtsj74ChkXPQtXIbVj41okp3f"};
+        var input = new SpreadsheetsRequest { SpreadsheetToken= "GFMMsfFV4huQxIt6Qanj8IvdpSh" };
 
         var handler = new SheetDataSourceHandler(InvocationContext, input);
 

@@ -4,7 +4,7 @@ namespace Apps.Lark.Models.Request
 {
     public class FindCellsRequest
     {
-        [Display("Range")]
+        [Display("Range", Description = "Input the range for searching, for example:'C1:G17'")]
         public string Range { get; set; }
 
         [Display("Query to find")]

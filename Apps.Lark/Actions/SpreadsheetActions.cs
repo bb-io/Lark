@@ -55,7 +55,7 @@ namespace Apps.Lark.Actions
         }
 
         [Action("Find cells", Description = "Find cells in a spreadsheet by a query and optional range")]
-        public async Task<FindCellsResponse> FindCells([ActionParameter] FindCellsRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
+        public async Task<FindCellMatchResponse> FindCells([ActionParameter] FindCellsRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
@@ -85,7 +85,9 @@ namespace Apps.Lark.Actions
             request.AddHeader("Content-Type", "application/json");
             request.AddJsonBody(body);
 
-            return await larkClient.ExecuteWithErrorHandling<FindCellsResponse>(request);
+            var response= await larkClient.ExecuteWithErrorHandling<FindCellsResponse>(request);
+
+            return new FindCellMatchResponse { MatchedCells=response.Data.FindResult.MatchedCells, MatchedFormulaCells=response.Data.FindResult.MatchedFormulaCells };
         }
 
         [Action("Add rows or columns", Description = "Add rows or columns to a sheet")]
@@ -198,14 +200,84 @@ namespace Apps.Lark.Actions
             return response;
         }
 
+        [Action("Update sheet cell", Description = "Updates sheet cell")]
+        public async Task<GetCellResponse> UpdateSheetCell([ActionParameter] UpdateSheetCell input, [ActionParameter] SpreadsheetsRequest spreadsheet)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values", Method.Put);
+
+            var body = new
+            {
+                valueRange = new
+                {
+                    range = $"{spreadsheet.SheetId}!{input.SheetCell}:{input.SheetCell}",
+                    values = new List<List<string>>
+                    {
+                        new List<string> { input.Value }
+                    }
+                }
+            };
+            request.AddJsonBody(body);
+
+            var response = await larkClient.ExecuteWithErrorHandling<UpdateRowsResponse>(request);
+            if (!response.Msg.Equals("success"))
+            {
+                throw new PluginApplicationException("Update cell failed. Please check your inputs and try again");
+            }
+
+            var request2 = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.SheetCell}:{input.SheetCell}", Method.Get);
+            
+            var getValue = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request2);
+
+            string cellValue = getValue.Data.ValueRange.Values?
+                   .FirstOrDefault()?
+                   .FirstOrDefault()?
+                   .ToString()
+                   ?? string.Empty;
+
+            return new GetCellResponse
+            {
+                Value = cellValue
+            };
+        }
+
         [Action("Get range cells values", Description = "Retrieve values for a specified range of cells in a spreadsheet")]
-        public async Task<GetRangeCellsValuesResponse> GetRangeCellsValues([ActionParameter] GetRangeCellsValuesRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
+        public async Task<GetRangeResponse> GetRangeCellsValues([ActionParameter] GetRangeCellsValuesRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
             var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Range}", Method.Get);
 
-            return await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
+            var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
+
+            return new GetRangeResponse { MajorDimension=response.Data.ValueRange.MajorDimension,
+            Values=response.Data.ValueRange.Values, Range=response.Data.ValueRange.Range,
+                Revision = response.Data.ValueRange.Revision,
+                SpreadsheetToken = response.Data.SpreadsheetToken,
+            };
+        }
+
+
+        [Action("Get sheet cell", Description = "Retrieves value for a specified cell in a spreadsheet")]
+        public async Task<GetCellResponse> GetSheetCell([ActionParameter] GetSheetCell input, [ActionParameter] SpreadsheetsRequest spreadsheet)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Cell}:{input.Cell}", Method.Get);
+
+            var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
+
+            string cellValue = response.Data.ValueRange.Values?
+                   .FirstOrDefault()?           
+                   .FirstOrDefault()?            
+                   .ToString() 
+                   ?? string.Empty;     
+
+            return new GetCellResponse
+            {
+                Value = cellValue
+            };
         }
 
         [Action("Download Spreadsheet", Description = "Downloads a spreadsheet file by exporting it from Lark Drive.")]

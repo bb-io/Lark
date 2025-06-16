@@ -40,6 +40,8 @@ Before you can connect you need to make sure that you have a Lark account  and y
 - **Insert rows** inserts rows into a spreadsheet. If there are existing rows, the new rows will be inserted before the existing rows
 - **Add or update rows/columns** adds or updates rows or columns in a spreadsheet.  If there are existing rows/columns, the new rows/columns will rewrite the existing one. By default uses delimeter `,` to split the values.
 - **Get range cells values** gets the values of a range of cells in a spreadsheet by specified range
+- **Get sheet cell** retrieves value for a specified cell in a spreadsheet
+- **Update sheet cell** updates value for a specified cell in a spreadsheet
 
 ## Events
 
@@ -47,6 +49,7 @@ Before you can connect you need to make sure that you have a Lark account  and y
 - **On reaction added** triggers when a reaction is added to a message in a Lark channel or directly to a user
 - **On user added to group** triggers when a user is added to a group
 - **On file edited** triggers when a file is edited in a Lark channel or directly to a user
+- **On new rows added** triggers when new rows are added to a spreadsheet
 
 
 ## Feedback

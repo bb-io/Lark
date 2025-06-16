@@ -7,8 +7,8 @@ namespace Apps.Lark.Models.Response
         [Display("User information")]
         public UserDto UserInfo { get; set; }
 
-        [Display("User ID for mention")]
-        public string Mention
+        [Display("Mention user")]
+        public string MentionUser
         {
             get
             {

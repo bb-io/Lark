@@ -70,7 +70,10 @@ namespace Apps.Lark.Polling
 
             var newRowResult = new NewRowResult
             {
-                NewRows = newRowsList.Any() ? newRowsList : new List<NewRow>()
+                NewRows = newRowsList.Any() ? newRowsList : new List<NewRow>(),
+                SpreadsheetToken = spreadsheet.SpreadsheetToken,
+                SheetId = spreadsheet.SheetId
+
             };
 
             return new PollingEventResponse<NewRowAddedMemory, NewRowResult>

@@ -247,7 +247,7 @@ namespace Apps.Lark.Actions
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Range}", Method.Get);
+            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Range}?valueRenderOption=UnformattedValue", Method.Get);
 
             var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
 
@@ -264,7 +264,7 @@ namespace Apps.Lark.Actions
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Cell}:{input.Cell}", Method.Get);
+            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}!{input.Cell}:{input.Cell}?valueRenderOption=UnformattedValue", Method.Get);
 
             var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
 

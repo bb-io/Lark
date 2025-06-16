@@ -6,6 +6,12 @@ namespace Apps.Lark.Polling.Models
     {
         [Display("New rows")]
         public List<NewRow>? NewRows { get; set; }
+
+        [Display("Spreadsheet ID")]
+        public string? SpreadsheetToken { get; set; }
+
+        [Display("Sheet ID")]
+        public string? SheetId { get; set; }
     }
 
     public class NewRow

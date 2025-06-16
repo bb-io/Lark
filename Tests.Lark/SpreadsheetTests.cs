@@ -99,7 +99,7 @@ namespace Tests.Lark
             var actions = new SpreadsheetActions(InvocationContext, FileManager);
             var updateRequest = new UpdateRowsRequest
             {
-                Range = "C18:F21",
+                Range = "C20:F23",
                 Values = new List<string>
             {
                 "Edit5, 1, http://www.xx.com",

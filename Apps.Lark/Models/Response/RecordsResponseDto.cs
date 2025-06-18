@@ -30,7 +30,7 @@ namespace Apps.Lark.Models.Response
     public class RecordItemDto
     {
         [JsonProperty("fields")]
-        public Dictionary<string, JToken>? Fields { get; set; }
+        public Dictionary<string, object>? Fields { get; set; }
 
         [JsonProperty("id")]
         public string? Id { get; set; }

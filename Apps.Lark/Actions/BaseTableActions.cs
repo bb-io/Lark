@@ -8,6 +8,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using System.Buffers.Text;
 
 namespace Apps.Lark.Actions
 {
@@ -66,7 +67,7 @@ namespace Apps.Lark.Actions
         }
 
         [Action("Update base record", Description = "Updates base record")]
-        public async Task<BaseTablesResponse> UpdateRecord([ActionParameter] BaseRequest input,
+        public async Task<UpdateRecordDataDto> UpdateRecord([ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
             [ActionParameter] UpdateRecordRequest update,
             [ActionParameter] GetBaseRecord record
@@ -74,14 +75,50 @@ namespace Apps.Lark.Actions
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
+            var request = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records", Method.Get);
 
-            var request = new RestRequest($"bitable/v1/apps/{input.AppId}/tables", Method.Get);
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
+            var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
 
-            var response = await larkClient.ExecuteWithErrorHandling<BaseTablesResponseDto>(request);
+            for (int i = 0; i < items.Count; i++)
+                items[i].RowIndex = i;
 
-            return new BaseTablesResponse
+            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
+                throw new PluginMisconfigurationException($"Row index must be from 0 to {items.Count - 1}");
+
+            var selectedRecord = items[record.RowIndex];
+
+            if (selectedRecord.Fields == null || !selectedRecord.Fields.ContainsKey(update.FieldName))
+                throw new PluginMisconfigurationException($"Field '{update.FieldName}' does not exist in the record.");
+
+            var fieldsToUpdate = new Dictionary<string, object> { [update.FieldName] = update.NewValues?.Any() == true ? update.NewValues : update.NewValue };
+            var updateBody = new { fields = fieldsToUpdate };
+
+            var updateRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{selectedRecord.RecordId}", Method.Put);
+            updateRequest.AddJsonBody(updateBody);
+
+            var updateResponse = await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(updateRequest);
+
+            var updatedFields = selectedRecord.Fields?.ToDictionary(kv => kv.Key, kv => kv.Value as object) ?? new Dictionary<string, object>();
+            if (updateResponse.Data?.Record?.Fields != null)
             {
-                Tables = response.Data?.Items ?? new List<TableItemDto>()
+                foreach (var field in updateResponse.Data.Record.Fields)
+                {
+                    updatedFields[field.Key] = field.Value;
+                }
+            }
+
+            var updatedRecord = new RecordItemDto
+            {
+                Fields = updatedFields,
+                Id = selectedRecord.Id,
+                RecordId = selectedRecord.RecordId,
+                RowIndex = selectedRecord.RowIndex
+            };
+
+            return new UpdateRecordDataDto
+            {
+                Record = updatedRecord
             };
         }
     }

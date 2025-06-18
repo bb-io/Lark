@@ -19,7 +19,7 @@ namespace Apps.Lark.DataSourceHandlers
             var response = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(request);
             var fields = response.Data.Items;
 
-            return fields.ToDictionary(field => field.FieldName, field => $"{field.FieldName}({field.UiType})");
+            return fields.ToDictionary(field => field.FieldName, field => $"{field.FieldName} ({field.UiType})");
         }
     }
 }

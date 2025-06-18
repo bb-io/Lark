@@ -59,4 +59,9 @@ namespace Apps.Lark.Models.Response
     {
         public RecordItemDto? Values { get; set; }
     }
+
+    public class RecordsResponse
+    {
+        public List<RecordItemDto>? Records { get; set; }
+    }
 }

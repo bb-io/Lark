@@ -84,6 +84,23 @@ namespace Apps.Lark.Polling
             };
         }
 
+
+        //[PollingEvent("On new base table rows added", "Triggered when new rows are added to base table")]
+        //public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAddedToBaseTable(PollingEventRequest<NewRowAddedMemory> request,
+        //    [PollingEventParameter] SpreadsheetsRequest spreadsheet)
+        //{
+        //    var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+        //    var values = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}", Method.Get);
+
+        //    var response = await larkClient.ExecuteWithErrorHandling<>(values);
+
+          
+        //}
+
+
+
+
         private string ExtractColumnRange(string fullRange)
         {
             if (string.IsNullOrEmpty(fullRange))

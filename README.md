@@ -30,6 +30,14 @@ Before you can connect you need to make sure that you have a Lark account  and y
 - **Get message** gets a message by it ID
 - **Edit message** edits a message by it ID
 
+### Base table
+
+- **Search base tables** searches for base tables
+- **Get base record** gets a base record
+- **Update base record** updates a base record 
+- **Get person entry from base table record** gets a person entry from a base table record
+- **Get date entries from base table record** gets date entries from a base table record
+- **Download attachments from base table record** downloads attachments from a base table record
 
 ### Spreadsheets
 

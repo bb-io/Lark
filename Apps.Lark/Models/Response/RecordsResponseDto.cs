@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Blackbird.Applications.Sdk.Common;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Apps.Lark.Models.Response
@@ -36,8 +37,10 @@ namespace Apps.Lark.Models.Response
         public string? Id { get; set; }
 
         [JsonProperty("record_id")]
+        [Display("Record ID")]
         public string? RecordId { get; set; }
         
+
         public int RowIndex { get; set; }
 
         public List<string> FieldValues
@@ -48,8 +51,6 @@ namespace Apps.Lark.Models.Response
                     .Select(kv => kv.Value?.ToString() ?? string.Empty)
                     .ToList()
                     ?? new List<string>();
-
-                values.Insert(0, RowIndex.ToString());
                 return values;
             }
         }

@@ -141,7 +141,7 @@ namespace Apps.Lark.Polling
 
                 foreach (var record in newRecords)
                 {
-                    record.Item.RowIndex = record.Index + 1;
+                    record.Item.RowIndex = record.Index;
                     newRecordsList.Add(record.Item);
                 }
             }

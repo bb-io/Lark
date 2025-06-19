@@ -40,7 +40,7 @@ namespace Tests.Lark
             {
                 Memory = new NewRowAddedMemory
                 {
-                    LastRowCount = 1,
+                    LastRowCount = 0,
                     LastPollingTime = DateTime.UtcNow.AddDays(-1),
                     Triggered = false
                 }

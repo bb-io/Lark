@@ -38,6 +38,19 @@ namespace Tests.Lark
                 new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
                 new UpdateRecordRequest { FieldName= "Custom text column name",
                 NewValue="Hello my new value from upate action 2"},
+                new GetBaseRecord { RowIndex = 2 });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
+
+        [TestMethod]
+        public async Task GetBaseRecordPersonTypeEntry_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetPersonEntry(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
                 new GetBaseRecord { RowIndex = 0 });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);

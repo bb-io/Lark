@@ -1,10 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
+using Newtonsoft.Json;
 
 namespace Apps.Lark.Models.Response
 {
@@ -43,6 +38,7 @@ namespace Apps.Lark.Models.Response
         public int? Revision { get; set; }
 
         [JsonProperty("table_id")]
+        [Display("Table ID")]
         public string? TableId { get; set; }
     }
 }

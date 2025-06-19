@@ -128,9 +128,6 @@ public class DataHandlerTests : TestBase
         Assert.IsTrue(result.Count() > 0);
     }
 
-
-    //BaseTableFieldDataSourceHandler
-
     [TestMethod]
     public async Task BaseTableFieldDataHandler_IsSuccess()
     {

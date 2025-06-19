@@ -92,4 +92,61 @@ public class DataHandlerTests : TestBase
 
         Assert.IsTrue(result.Count() > 0);
     }
+
+
+    [TestMethod]
+    public async Task BaseDataHandler_IsSuccess()
+    {
+
+        var handler = new BaseDataSourceHandler(InvocationContext);
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTableDataHandler_IsSuccess()
+    {
+
+        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId= "MXjZb5uHvahFiMs5mUvjIzC9pxf" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTableFieldDataHandler_IsSuccess()
+    {
+
+        var handler = new BaseTableFieldDataSourceHandler(InvocationContext, new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+            new BaseTableRequest { TableId= "tblORLQK2OUtTZ9p" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
 }
+
+
+

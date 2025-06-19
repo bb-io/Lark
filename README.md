@@ -30,6 +30,14 @@ Before you can connect you need to make sure that you have a Lark account  and y
 - **Get message** gets a message by it ID
 - **Edit message** edits a message by it ID
 
+### Base table
+
+- **Search base tables** searches for base tables
+- **Get base record** gets a base record
+- **Update base record** updates a base record 
+- **Get person entry from base table record** gets a person entry from a base table record
+- **Get date entries from base table record** gets date entries from a base table record
+- **Download attachments from base table record** downloads attachments from a base table record
 
 ### Spreadsheets
 
@@ -50,6 +58,7 @@ Before you can connect you need to make sure that you have a Lark account  and y
 - **On user added to group** triggers when a user is added to a group
 - **On file edited** triggers when a file is edited in a Lark channel or directly to a user
 - **On new rows added** triggers when new rows are added to a spreadsheet
+- **On base table new rows added** triggers when new rows are added to a base table
 
 
 ## Feedback

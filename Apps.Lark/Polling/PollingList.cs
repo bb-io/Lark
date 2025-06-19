@@ -84,6 +84,88 @@ namespace Apps.Lark.Polling
             };
         }
 
+
+        [PollingEvent("On base table new rows added", "Triggered when new rows are added to base table")]
+        public async Task<PollingEventResponse<NewRowAddedMemory, RecordsResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<NewRowAddedMemory> request,
+            [PollingEventParameter] BaseRequest baseId,
+            [PollingEventParameter] BaseTableRequest table)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var listRecords = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records", Method.Get);
+
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(listRecords);
+
+            if (recordsResponse?.Data?.Items == null)
+            {
+                return new PollingEventResponse<NewRowAddedMemory, RecordsResponse>
+                {
+                    FlyBird = false,
+                    Memory = request.Memory ?? new NewRowAddedMemory(),
+                    Result = null
+                };
+            }
+
+            var validRecords = recordsResponse.Data.Items
+                 .Select((item, index) => new { Item = item, Index = index })
+                 .Where(record => record.Item.Fields?.Any(kv => kv.Value != null) ?? false)
+                 .ToList();
+
+            int currentRowCount = validRecords.Count;
+
+            if (request.Memory == null)
+            {
+                request.Memory = new NewRowAddedMemory
+                {
+                    LastRowCount = currentRowCount,
+                    LastPollingTime = DateTime.UtcNow,
+                    Triggered = false
+                };
+
+                return new PollingEventResponse<NewRowAddedMemory, RecordsResponse>
+                {
+                    FlyBird = false,
+                    Memory = request.Memory,
+                    Result = null
+                };
+            }
+
+            var memory = request.Memory;
+            var newRecordsList = new List<RecordItemDto>();
+
+            if (currentRowCount > memory.LastRowCount)
+            {
+                var newRecords = validRecords
+                    .Where(record => record.Index >= memory.LastRowCount)
+                    .ToList();
+
+                foreach (var record in newRecords)
+                {
+                    record.Item.RowIndex = record.Index;
+                    newRecordsList.Add(record.Item);
+                }
+            }
+
+            memory.LastRowCount = currentRowCount;
+            memory.LastPollingTime = DateTime.UtcNow;
+            memory.Triggered = newRecordsList.Any();
+
+            var newRowResult = new RecordsResponse
+            {
+                Records = newRecordsList.Any() ? newRecordsList : null
+            };
+
+            return new PollingEventResponse<NewRowAddedMemory, RecordsResponse>
+            {
+                FlyBird = newRecordsList.Any(),
+                Memory = memory,
+                Result = newRowResult
+            };
+        }
+
+
+
+
         private string ExtractColumnRange(string fullRange)
         {
             if (string.IsNullOrEmpty(fullRange))

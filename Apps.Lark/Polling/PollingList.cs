@@ -85,7 +85,7 @@ namespace Apps.Lark.Polling
         }
 
 
-        [PollingEvent("On base table new  rows added", "Triggered when new rows are added to base table")]
+        [PollingEvent("On base table new rows added", "Triggered when new rows are added to base table")]
         public async Task<PollingEventResponse<NewRowAddedMemory, RecordsResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<NewRowAddedMemory> request,
             [PollingEventParameter] BaseRequest baseId,
             [PollingEventParameter] BaseTableRequest table)

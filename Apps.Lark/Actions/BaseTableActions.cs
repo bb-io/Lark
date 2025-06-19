@@ -16,15 +16,6 @@ namespace Apps.Lark.Actions
     [ActionList]
     public class BaseTableActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
-        //[Action("Create base table", Description = "Creates base table")]
-        //public async Task<> CreateBaseTable([ActionParameter] CreateSpreadsheetRequest input)
-        //{
-        //    var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-
-        //    var request = new RestRequest("/sheets/v3/spreadsheets", Method.Post);
-
-
-        //}
 
         [Action("Search base tables", Description = "Searches base tables")]
         public async Task<BaseTablesResponse> SearchBaseTables([ActionParameter] BaseRequest input)
@@ -37,7 +28,7 @@ namespace Apps.Lark.Actions
 
             return new BaseTablesResponse
             {
-               Tables=response.Data?.Items ?? new List<TableItemDto>()
+                Tables = response.Data?.Items ?? new List<TableItemDto>()
             };
         }
 
@@ -129,7 +120,7 @@ namespace Apps.Lark.Actions
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var request = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records", Method.Get);
+            var request = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id", Method.Get);
             var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
             var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
 
@@ -196,9 +187,76 @@ namespace Apps.Lark.Actions
             {
                 PersonFields = personFieldEntries.Any() ? personFieldEntries : new List<PersonFieldEntry>()
             };
+        }
 
+        [Action("Get date entries from base table record", Description = "Gets date entries from base table record as DateTime")]
+        public async Task<DateFieldResponse> GetDateEntries(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table,
+            [ActionParameter] GetBaseRecord record)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
+            var requestRecords = new RestRequest(
+                $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",
+                Method.Get);
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(requestRecords);
+            var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
+            for (int i = 0; i < items.Count; i++) items[i].RowIndex = i;
 
+            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
+                throw new PluginMisconfigurationException($"Row index must be from 0 to {items.Count - 1}");
+
+            var selectedRecord = items[record.RowIndex];
+
+            var allFields = new List<FieldItem>();
+            string? pageToken = null;
+            do
+            {
+                var requestFields = new RestRequest(
+                    $"/bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields",
+                    Method.Get);
+                if (!string.IsNullOrEmpty(pageToken))
+                    requestFields.AddParameter("page_token", pageToken);
+
+                var fieldsResponse = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(requestFields);
+                if (fieldsResponse?.Data?.Items != null)
+                {
+                    allFields.AddRange(fieldsResponse.Data.Items);
+                    pageToken = fieldsResponse.Data.HasMore ? fieldsResponse.Data.PageToken : null;
+                }
+                else
+                {
+                    pageToken = null;
+                }
+            } while (!string.IsNullOrEmpty(pageToken));
+
+            var dateFields = allFields.Where(f => f.Type == 5).ToList();
+            var dateEntries = new List<DateFieldEntry>();
+
+            foreach (var df in dateFields)
+            {
+                if (selectedRecord.Fields != null
+                    && selectedRecord.Fields.TryGetValue(df.FieldName, out var rawValue)
+                    && rawValue != null)
+                {
+                    if (long.TryParse(rawValue.ToString(), out var ms))
+                    {
+                        var dto = DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime;
+                        dateEntries.Add(new DateFieldEntry
+                        {
+                            FieldId = df.FieldId,
+                            FieldName = df.FieldName,
+                            Date = dto
+                        });
+                    }
+                }
+            }
+
+            return new DateFieldResponse
+            {
+                DateFields = dateEntries
+            };
         }
     }
 }

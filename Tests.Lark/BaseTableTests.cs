@@ -57,5 +57,18 @@ namespace Tests.Lark
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
+
+        [TestMethod]
+        public async Task GetBaseRecordDateTypeEntry_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetDateEntries(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
+                new GetBaseRecord { RowIndex = 0 });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
     }
 }

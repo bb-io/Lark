@@ -34,6 +34,9 @@ namespace Apps.Lark.Models.Response
         [JsonProperty("id")]
         public string Id { get; set; }
 
+        [Display("User Mention")]
+        public string? UserMention => $"<at user_id=\"{Id}\">{Name}</at>";
+
         [JsonProperty("name")]
         public string Name { get; set; }
 

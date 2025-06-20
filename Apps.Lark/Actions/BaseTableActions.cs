@@ -57,6 +57,38 @@ namespace Apps.Lark.Actions
             };
         }
 
+        [Action("Get base table used range", Description = "Get all non-empty records from base table")]
+        public async Task<RecordsResponse> GetBaseRecords(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var request = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",Method.Get);
+
+            var response = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
+
+            var items = response.Data?.Items ?? new List<RecordItemDto>();
+
+            for (int i = 0; i < items.Count; i++)
+            {
+                items[i].RowIndex = i;
+            }
+
+            var nonEmpty = items
+                .Where(item => item.Fields?.Values.Any(v => v != null) ?? false)
+                .ToList();
+
+            return new RecordsResponse
+            {
+                Records = nonEmpty,
+                RecordsCount = nonEmpty.Count
+            };
+        }
+
+
+
+
         [Action("Update base record", Description = "Updates base record")]
         public async Task<UpdateRecordDataDto> UpdateRecord([ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,

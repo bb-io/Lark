@@ -65,5 +65,8 @@ namespace Apps.Lark.Models.Response
     public class RecordsResponse
     {
         public List<RecordItemDto>? Records { get; set; }
+
+        [Display("Records count")]
+        public int? RecordsCount { get; set; }
     }
 }

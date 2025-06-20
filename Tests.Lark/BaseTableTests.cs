@@ -90,5 +90,18 @@ namespace Tests.Lark
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
+
+
+        [TestMethod]
+        public async Task GetBaseTableUsedRange_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetBaseRecords(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
     }
 }

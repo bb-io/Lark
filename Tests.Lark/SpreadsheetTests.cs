@@ -271,5 +271,24 @@ namespace Tests.Lark
             Console.WriteLine(json);
             Assert.IsNotNull(result);
         }
+
+
+
+        [TestMethod]
+        public async Task GetRangeUsedValue_IsSucces()
+        {
+            var actions = new SpreadsheetActions(InvocationContext, FileManager);
+
+
+            var result = await actions.GetSheetUsedRange( new SpreadsheetsRequest
+            {
+                SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
+                SheetId = "a8685d",
+            });
+
+            var json = JsonConvert.SerializeObject(result, Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(result);
+        }
     }
 }

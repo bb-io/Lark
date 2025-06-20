@@ -8,6 +8,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Newtonsoft.Json.Linq;
 using RestSharp;
 
 namespace Apps.Lark.Actions
@@ -88,6 +89,20 @@ namespace Apps.Lark.Actions
             var response= await larkClient.ExecuteWithErrorHandling<FindCellsResponse>(request);
 
             return new FindCellMatchResponse { MatchedCells=response.Data.FindResult.MatchedCells, MatchedFormulaCells=response.Data.FindResult.MatchedFormulaCells };
+        }
+
+
+        [Action("Get sheet used range", Description = "Get sheet used range")]
+        public async Task<RowsDto> GetSheetUsedRange([ActionParameter] SpreadsheetsRequest spreadsheet)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var request = new RestRequest($"/sheets/v2/spreadsheets/{spreadsheet.SpreadsheetToken}/values/{spreadsheet.SheetId}", Method.Get);
+
+            var response = await larkClient.ExecuteWithErrorHandling<GetRangeUsedValueDto>(request);
+
+            var result = ToRowsDto(response);
+            return result;
         }
 
         [Action("Add rows or columns", Description = "Add rows or columns to a sheet")]
@@ -354,5 +369,48 @@ namespace Apps.Lark.Actions
             return fileReference;
         }
 
+        public RowsDto ToRowsDto(GetRangeUsedValueDto apiResponse)
+        {
+            var vr = apiResponse?.Data?.ValueRange;
+            if (vr?.Values == null)
+                return new RowsDto { Range = string.Empty, Rows = new List<RowDto>(), RowsCount = 0 };
+
+            var rawRange = vr.Range ?? "";
+            var rangeWithoutSheet = rawRange.Contains("!")
+                ? rawRange.Substring(rawRange.IndexOf('!') + 1)
+                : rawRange;
+
+            var rows = vr.Values
+                .Select((cells, idx) => new RowDto
+                {
+                    RowId = idx + 1,
+                    Values = cells.Select(token =>
+                    {
+                        if (token == null || token.Type == JTokenType.Null)
+                            return string.Empty;
+
+                        if (token.Type == JTokenType.Array)
+                        {
+                            var arr = (JArray)token;
+                            var first = arr.First as JObject;
+                            if (first != null && first["text"] != null)
+                                return first["text"]!.ToString();
+
+                            return arr.ToString(Newtonsoft.Json.Formatting.None);
+                        }
+ 
+                        return token.ToString();
+                    })
+                    .ToList()
+                })
+                .ToList();
+
+            return new RowsDto
+            {
+                Range = rangeWithoutSheet,
+                Rows = rows,
+                RowsCount = rows.Count
+            };
+        }
     }
 }

@@ -103,5 +103,17 @@ namespace Tests.Lark
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
+
+        //InsertBaseTableRow
+
+        [TestMethod]
+        public async Task InsertBaseTableRow_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            await action.InsertBaseTableRow(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" });
+
+            Assert.IsTrue(true);
+        }
     }
 }

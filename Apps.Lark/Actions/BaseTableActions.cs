@@ -32,6 +32,22 @@ namespace Apps.Lark.Actions
             };
         }
 
+        [Action("Insert row to base table", Description = "Inserts row to base table ")]
+        public async Task InsertBaseTableRow([ActionParameter] BaseRequest input,
+            [ActionParameter] BaseTableRequest table)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var request = new RestRequest($"bitable/v1/apps/{input.AppId}/tables/{table.TableId}/records", Method.Post);
+            var fields = new Dictionary<string, object>
+            {
+            };
+            var body = new { fields };
+            request.AddJsonBody(body);
+            await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(request);
+        }
+
+
         [Action("Get base record", Description = "Gets record from base table")]
         public async Task<RecordResponse> GetRecord([ActionParameter] BaseRequest baseId, [ActionParameter] BaseTableRequest table,
             [ActionParameter] GetBaseRecord record)

@@ -12,7 +12,7 @@ namespace Apps.Lark.Actions
     [ActionList]
     public class UserActions(InvocationContext invocationContext) : Invocable(invocationContext)
     {
-        [Action("Get user information", Description = "Gets information about user")]
+        [Action("Get user information", Description = "Gets information about user by ID")]
         public async Task<GetUserResponse> GetUserInfo([ActionParameter] GetUserRequest getUser)
         {
             var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
@@ -21,6 +21,20 @@ namespace Apps.Lark.Actions
             var response = await client.ExecuteWithErrorHandling<UserResponse>(request);
 
             return new GetUserResponse { UserInfo=response.Data.User };
+        }
+
+        [Action("Get user information from email", Description = "Gets information about user from email")]
+        public async Task<UserInfoByEmailResponse> GetUserInfoByEmail([ActionParameter] GetUserByEmailRequest getUser)
+        {
+            var client = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest($"/contact/v3/users/batch_get_id?user_id_type=user_id", Method.Post);
+            request.AddJsonBody(new
+            {
+                emails = new[] { getUser.Email }
+            });
+            var response = await client.ExecuteWithErrorHandling<UserInfoByEmail>(request);
+
+            return new UserInfoByEmailResponse { UserList = response.Data.UserList };
         }
     }
 }

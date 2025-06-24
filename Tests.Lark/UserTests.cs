@@ -20,5 +20,17 @@ namespace Tests.Lark
             Assert.IsNotNull(result);
         }
 
+        [TestMethod]
+        public async Task GetUserInfoByEmail_IsSuccess()
+        {
+            var actions = new UserActions(InvocationContext);
+            var result = await actions.GetUserInfoByEmail(new GetUserByEmailRequest
+            {
+                Email = "ariabushenko@blackbird.io"
+            });
+            Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+            Assert.IsNotNull(result);
+        }
+
     }
 }

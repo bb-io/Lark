@@ -33,6 +33,7 @@ namespace Apps.Lark.Actions
                 emails = new[] { getUser.Email }
             });
             var response = await client.ExecuteWithErrorHandling<UserInfoByEmail>(request);
+            var userList = response.Data.UserList;
 
             return new UserInfoByEmailResponse { UserList = response.Data.UserList };
         }

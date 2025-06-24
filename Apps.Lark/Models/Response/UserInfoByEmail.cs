@@ -7,6 +7,20 @@ namespace Apps.Lark.Models.Response
     {
         [Display("User information")]
         public List<User> UserList { get; set; }
+
+        [Display("Mention user")]
+        public string MentionUser
+        {
+            get
+            {
+                if (UserList == null || !UserList.Any())
+                    return string.Empty;
+
+                return string.Join(" ",
+                    UserList.Select(u => $"<at user_id=\"{u.UserId}\"></at>")
+                );
+            }
+        }
     }
     public class UserInfoByEmail
     {

@@ -45,7 +45,7 @@ namespace Tests.Lark
                     NewValues = new List<string> { "Option 12", "Option 21" },
                     //Attachment = new FileReference { Name = "Test3.png" }
                 },
-                new GetBaseRecord { RowIndex = 3 });
+                new GetBaseRecord { RowIndex = 6 });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -102,6 +102,18 @@ namespace Tests.Lark
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
             Assert.IsNotNull(response);
+        }
+
+        //InsertBaseTableRow
+
+        [TestMethod]
+        public async Task InsertBaseTableRow_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            await action.InsertBaseTableRow(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" });
+
+            Assert.IsTrue(true);
         }
     }
 }

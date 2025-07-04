@@ -258,7 +258,7 @@ namespace Apps.Lark.Actions
         }
 
         [Action("Get range cells values", Description = "Retrieve values for a specified range of cells in a spreadsheet")]
-        public async Task<GetRangeResponse> GetRangeCellsValues([ActionParameter] GetRangeCellsValuesRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
+        public async Task<RowsDto> GetRangeCellsValues([ActionParameter] GetRangeCellsValuesRequest input, [ActionParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
@@ -266,11 +266,7 @@ namespace Apps.Lark.Actions
 
             var response = await larkClient.ExecuteWithErrorHandling<GetRangeCellsValuesResponse>(request);
 
-            return new GetRangeResponse { MajorDimension=response.Data.ValueRange.MajorDimension,
-            Values=response.Data.ValueRange.Values, Range=response.Data.ValueRange.Range,
-                Revision = response.Data.ValueRange.Revision,
-                SpreadsheetToken = response.Data.SpreadsheetToken,
-            };
+            return ToRowsRangeDto(response.Data.ValueRange.Range, response.Data.ValueRange.Values);
         }
 
 
@@ -402,6 +398,40 @@ namespace Apps.Lark.Actions
                         return token.ToString();
                     })
                     .ToList()
+                })
+                .ToList();
+
+            return new RowsDto
+            {
+                Range = rangeWithoutSheet,
+                Rows = rows,
+                RowsCount = rows.Count
+            };
+        }
+
+        private RowsDto ToRowsRangeDto(string rawRange, List<List<object>> values)
+        {
+            if (values == null || values.Count == 0)
+            {
+                return new RowsDto
+                {
+                    Range = "",
+                    Rows = new List<RowDto>(),
+                    RowsCount = 0
+                };
+            }
+
+            var rangeWithoutSheet = rawRange.Contains("!")
+                ? rawRange.Substring(rawRange.IndexOf('!') + 1)
+                : rawRange;
+
+            var rows = values
+                .Select((cells, idx) => new RowDto
+                {
+                    RowId = idx + 1,
+                    Values = cells
+                        .Select(o => o?.ToString() ?? string.Empty)
+                        .ToList()
                 })
                 .ToList();
 

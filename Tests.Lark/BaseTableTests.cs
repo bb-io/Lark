@@ -45,7 +45,7 @@ namespace Tests.Lark
                     NewValues = new List<string> { "Option 12", "Option 21" },
                     //Attachment = new FileReference { Name = "Test3.png" }
                 },
-                new GetBaseRecord { RowIndex = 3 });
+                new GetBaseRecord { RowIndex = 6 });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);

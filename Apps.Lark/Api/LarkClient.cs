@@ -15,7 +15,6 @@ public class LarkClient : BlackBirdRestClient
         BaseUrl = new Uri("https://open.larksuite.com/open-apis"),
     })
     {
-
         var appId = creds.First(v => v.KeyName == CredsNames.AppId).Value;
         var appSecret = creds.First(v => v.KeyName == CredsNames.AppSecret).Value;
 

@@ -86,15 +86,15 @@ namespace Apps.Lark.Polling
 
 
         [PollingEvent("On base table new rows added", "Triggered when new rows are added to base table")]
-        public async Task<PollingEventResponse<DateTimeMemory, RecordIdsResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<DateTimeMemory> request,
+        public async Task<PollingEventResponse<DateTimeMemory, RecordListResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<DateTimeMemory> request,
             [PollingEventParameter] BaseRequest baseId,
             [PollingEventParameter] BaseTableRequest table,
-            [PollingEventParameter] RecordCreatedRequest input)
+            [PollingEventParameter] RecordCreatedRequest createdAt)
         {
             // first polling, init memory and return early
             if (request.Memory == null)
             {
-                return new PollingEventResponse<DateTimeMemory, RecordIdsResponse>
+                return new PollingEventResponse<DateTimeMemory, RecordListResponse>
                 {
                     FlyBird = false,
                     Memory = new DateTimeMemory { LastPollingTime = DateTime.UtcNow },
@@ -109,27 +109,34 @@ namespace Apps.Lark.Polling
 
             var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
             searchRecordsRequest.AddQueryParameter("page_size", "100");
-            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, input.FieldName));
+            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAt.FieldName));
 
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
             var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsSearchApiResponseDto>(searchRecordsRequest);
 
-            var newRecords = new RecordIdsResponse();
+            var newRecords = new RecordListResponse();
             foreach (var record in recordsResponse.Data.Items)
             {
-                if (!record.Fields.ContainsKey(input.FieldName))
+                if (!record.Fields.ContainsKey(createdAt.FieldName))
                     continue;
 
-                var recordCreatedAt = long.TryParse(record.Fields[input.FieldName], out var ms)
+                var recordCreatedAt = long.TryParse(record.Fields[createdAt.FieldName], out var ms)
                     ? DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime
                     : DateTime.MinValue;
 
                 if (recordCreatedAt > memory.LastPollingTime)
-                    newRecords.RecordIds.Add(new RecordIdDto { RecordId = record.RecordId });
+                {
+                    newRecords.RecordIds.Add(new RecordListItemDto
+                    {
+                        RecordId = record.RecordId,
+                        DatabaseId = baseId.AppId,
+                        TableId = table.TableId
+                    });
+                }
             }
 
             memory.LastPollingTime = pollingStartTime;
-            return new PollingEventResponse<DateTimeMemory, RecordIdsResponse>
+            return new PollingEventResponse<DateTimeMemory, RecordListResponse>
             {
                 FlyBird = newRecords.RecordIds.Count > 0,
                 Memory = memory,

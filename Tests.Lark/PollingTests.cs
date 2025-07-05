@@ -36,17 +36,19 @@ namespace Tests.Lark
         public async Task BaseTableNewRowAddedMemory_IsSucces()
         {
             var actions = new PollingList(InvocationContext);
-            var pollingRequest = new PollingEventRequest<NewRowAddedMemory>
+            var pollingRequest = new PollingEventRequest<DateTimeMemory>
             {
-                Memory = new NewRowAddedMemory
+                Memory = new DateTimeMemory
                 {
-                    LastRowCount = 0,
                     LastPollingTime = DateTime.UtcNow.AddDays(-1),
-                    Triggered = false
                 }
             };
-            var result = await actions.OnNewRowsAddedToBaseTable(pollingRequest,
-                new BaseRequest { AppId= "MXjZb5uHvahFiMs5mUvjIzC9pxf" }, new BaseTableRequest { TableId= "tblORLQK2OUtTZ9p" });
+            var result = await actions.OnNewRowsAddedToBaseTable(
+                pollingRequest,
+                new BaseRequest { AppId= "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId= "tblzSbOM8CQupYfE" },
+                new RecordCreatedRequest { FieldName = "Submitted on" }
+            );
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
             Assert.IsNotNull(result);
         }

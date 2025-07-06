@@ -1,9 +1,10 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
+using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Apps.Lark.Polling.Models;
-using Blackbird.Applications.Sdk.Common;
+using Apps.Lark.Utils;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using RestSharp;
@@ -14,7 +15,7 @@ namespace Apps.Lark.Polling
     public class PollingList(InvocationContext invocationContext) : Invocable(invocationContext)
     {
         [PollingEvent("On new rows added", "Triggered when new rows are added to the sheet")]
-        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request, 
+        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request,
             [PollingEventParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
@@ -106,41 +107,38 @@ namespace Apps.Lark.Polling
             var memory = request.Memory;
             var lastPollingDay = memory.LastPollingTime.Date;
             var pollingStartTime = DateTime.UtcNow;
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(item => item.FieldName, item => item);
 
             var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
             searchRecordsRequest.AddQueryParameter("page_size", "100");
-            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAt.FieldName));
+            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAt.FieldName));            
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
 
-            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsSearchApiResponseDto>(searchRecordsRequest);
-
-            var newRecords = new RecordListResponse();
-            foreach (var record in recordsResponse.Data.Items)
-            {
-                if (!record.Fields.ContainsKey(createdAt.FieldName))
-                    continue;
-
-                var recordCreatedAt = long.TryParse(record.Fields[createdAt.FieldName], out var ms)
-                    ? DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime
-                    : DateTime.MinValue;
-
-                if (recordCreatedAt > memory.LastPollingTime)
+            var receivedRecords = BaseRecordJsonParser
+                .ConvertToRecordsList(recordsResponse.Content ?? "", schemaByFieldName)
+                .Where(r =>
                 {
-                    newRecords.RecordIds.Add(new RecordListItemDto
-                    {
-                        RecordId = record.RecordId,
-                        DatabaseId = baseId.AppId,
-                        TableId = table.TableId
-                    });
-                }
-            }
+                    var createdAtField = r.Fields.FirstOrDefault(f => f.FieldName == createdAt.FieldName);
+                    var recordCreatedAt = DateTime.Parse(createdAtField?.FieldValue ?? "").ToUniversalTime();
+                    return recordCreatedAt > memory.LastPollingTime;
+                })
+                .ToList();
 
             memory.LastPollingTime = pollingStartTime;
             return new PollingEventResponse<DateTimeMemory, RecordListResponse>
             {
-                FlyBird = newRecords.RecordIds.Count > 0,
+                FlyBird = receivedRecords.Count > 0,
                 Memory = memory,
-                Result = newRecords
+                Result = new RecordListResponse()
+                {
+                    BaseId = baseId.AppId,
+                    TableId = table.TableId,
+                    Records = receivedRecords,
+                }
             };
         }
 
@@ -183,8 +181,8 @@ namespace Apps.Lark.Polling
                     @operator = "is",
                     value = new object[]
                     {
-                            "ExactDate",
-                            unixTimestamp
+                        "ExactDate",
+                        unixTimestamp
                     }
                 });
                 currentDay = currentDay.AddDays(1);
@@ -193,7 +191,6 @@ namespace Apps.Lark.Polling
             return new
             {
                 automatic_fields = false,
-                field_names = new[] { fieldName },
                 filter = new
                 {
                     conjunction = "or",

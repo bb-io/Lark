@@ -1,5 +1,6 @@
 ﻿using Apps.Lark.Models.Dtos;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Lark.Polling.Models;
 public class RecordListResponse
@@ -11,5 +12,8 @@ public class RecordListResponse
     public string TableId { get; set; } = string.Empty;
 
     [Display("Records")]
-    public List<BaseRecordDto> Records { get; set; } = [];
+    public IEnumerable<BaseRecordDto> Records { get; set; } = [];
+
+    [Display("Records in JSON files")]
+    public IEnumerable<FileReference> RecordsJson { get; set; } = [];
 }

@@ -12,7 +12,7 @@ namespace Tests.Lark
         [TestMethod]
         public async Task NewRowAddedMemory_IsSucces()
         {
-            var actions = new PollingList(InvocationContext);
+            var actions = new PollingList(InvocationContext, FileManager);
             var spreadsheet = new SpreadsheetsRequest
             {
                 SpreadsheetToken = "GFMMsfFV4huQxIt6Qanj8IvdpSh",
@@ -35,7 +35,7 @@ namespace Tests.Lark
         [TestMethod]
         public async Task BaseTableNewRowAddedMemory_IsSucces()
         {
-            var actions = new PollingList(InvocationContext);
+            var actions = new PollingList(InvocationContext, FileManager);
             var pollingRequest = new PollingEventRequest<DateTimeMemory>
             {
                 Memory = new DateTimeMemory

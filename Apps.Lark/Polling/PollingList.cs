@@ -9,12 +9,15 @@ using Apps.Lark.Utils;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Newtonsoft.Json;
 using RestSharp;
+using System.Text;
 
 namespace Apps.Lark.Polling
 {
     [PollingEventList]
-    public class PollingList(InvocationContext invocationContext) : Invocable(invocationContext)
+    public class PollingList(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
         [PollingEvent("On new rows added", "Triggered when new rows are added to the sheet")]
         public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request,
@@ -131,6 +134,20 @@ namespace Apps.Lark.Polling
                 })
                 .ToList();
 
+            var recordsJson = await Task.WhenAll(
+                receivedRecords.Select(async record =>
+                {
+                    var jsonString = JsonConvert.SerializeObject(record, Formatting.Indented);
+                    var jsonBytes = Encoding.UTF8.GetBytes(jsonString);
+
+                    return await fileManagementClient.UploadAsync(
+                        new MemoryStream(jsonBytes),
+                        "application/json",
+                        $"{record.RecordId}.json"
+                    );
+                })
+            );
+
             memory.LastPollingTime = pollingStartTime;
             return new PollingEventResponse<DateTimeMemory, RecordListResponse>
             {
@@ -141,6 +158,7 @@ namespace Apps.Lark.Polling
                     BaseId = baseId.AppId,
                     TableId = table.TableId,
                     Records = receivedRecords,
+                    RecordsJson = recordsJson,
                 }
             };
         }

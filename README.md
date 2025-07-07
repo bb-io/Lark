@@ -13,6 +13,87 @@ Lark's comprehensive and in-depth open capabilities serve as a hub of informatio
 
 Before you can connect you need to make sure that you have a Lark account  and you are setted up as an admin and the bot is enabled for the necessary groups
 
+
+## Creating Lark custom application
+
+To create a Lark custom application, follow these steps:
+1. Go to the [Lark Developer Console](https://open.larksuite.com/app?lang=en-US).
+1. Click on **Create Custom App**.
+3. Fill in the required information:
+   - **App Name**: Choose a name for your application.
+   - **App Icon**: Upload an icon for your application.
+   - **App Description**: Provide a brief description of your application.
+   ![example](image/README/Lark-create-app-example.png)
+	
+4. Click on **Create** to create your application
+5. After creating the customn application, you will be redirected to the **Add features** page
+   ![example](image/README/features-example.png)
+
+6. Select the features you want to add to your application. For current configuration, you will need **Bot**, **Web app**, **Workplace block** and **Base record view**.
+7. After configuring the features you need to release the app version
+   ![example](image/README/release-version-example.png)
+
+## Adding scopes
+
+To add scopes to your Lark application, follow to page **Permissions & Scopes**
+![example](image/README/adding-scopes-example.png)
+
+Click on **Add permission scopes to app** and select the scopes you want to add to your application.
+
+For current configuration, you will need the following scopes:
+
+**Base tables**
+
+| Scope                  | Description                                  |
+|------------------------|----------------------------------------------|
+| `bitable:app`          | View, comment on, edit, and manage bases     |
+| `bitable:app:readonly` | View, comment on, and export bases           |
+
+
+**General scopes**
+
+| Scope                                | Description                                    |
+|--------------------------------------|------------------------------------------------|
+| `contact:user.base:readonly`         | Access users’ basic information                |
+| `contact:user.employee_id:readonly`  | Access users’ employee IDs; obtain user ID     |
+| `drive:drive`                        | View, comment, edit, and manage all files in My Space |
+| `drive:drive:readonly`               | View, comment on, and download all files in My Space |
+| `drive:export:readonly`              | Export Docs documents                          |
+| `drive:file`                         | Upload and download files to My Space          |
+| `drive:file:readonly`                | View and download files in My Space            |
+
+
+**Spreadsheets**
+
+| Scope                         | Description                                 |
+|-------------------------------|---------------------------------------------|
+| `docs:document:export`        | Export document                             |
+| `sheets:spreadsheet`          | View, comment, and manage Sheets            |
+| `sheets:spreadsheet:readonly` | View, comment, and export Sheets            |
+
+
+**Messages**
+
+| Scope                      | Description                                      |
+|----------------------------|--------------------------------------------------|
+| `im:message`               | Read and send messages in private and group chats|
+| `im:message:readonly`      | Read messages in private and group chats         |
+| `im:message:send_as_bot`   | Send messages as an app                          |
+| `im:resource`              | Read and upload images or other files            |
+| `im:message:update`        | Update message                                   |
+
+
+## Getting credentials
+
+To get the Application ID and Application Secret, follow these steps:
+
+1. Go to the [Lark Developer Console](https://open.larksuite.com/app?lang=en-US).
+2. Select your application.
+3. In the left sidebar, click on **Credentials and Basic info**.
+4. You will find the **Application ID** and **Application Secret** in the **Credentials** section.
+   ![example](image/README/credentials-example.png)
+
+
 ## Connecting
 
 1. Navigate to Apps, and identify the **Lark** app. You can use search to find it.

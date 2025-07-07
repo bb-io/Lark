@@ -59,13 +59,10 @@ namespace Apps.Lark.Actions
             var response = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
             var items = response.Data?.Items ?? new List<RecordItemDto>();
 
-            for (int i = 0; i < items.Count; i++)
-                items[i].RowIndex = i;
+            var selected = items.FirstOrDefault(r => r.RecordId == record.RecordID);
 
-            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
-                throw new PluginMisconfigurationException($"Row index must be from 0 to {items.Count - 1}");
-
-            var selected = items[record.RowIndex];
+            if (selected is null)
+                throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
             return new RecordResponse
             {
@@ -85,11 +82,6 @@ namespace Apps.Lark.Actions
             var response = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
 
             var items = response.Data?.Items ?? new List<RecordItemDto>();
-
-            for (int i = 0; i < items.Count; i++)
-            {
-                items[i].RowIndex = i;
-            }
 
             var nonEmpty = items
                 .Where(item => item.Fields?.Values.Any(v => v != null) ?? false)
@@ -119,13 +111,10 @@ namespace Apps.Lark.Actions
                 Method.Get);
             var listResp = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(listReq);
             var items = listResp.Data?.Items ?? new List<RecordItemDto>();
-            for (int i = 0; i < items.Count; i++)
-                items[i].RowIndex = i;
 
-            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
-                throw new PluginMisconfigurationException($"RowIndex must be between 0 and {items.Count - 1}");
-
-            var selected = items[record.RowIndex];
+            var selected = items.FirstOrDefault(r => r.RecordId == record.RecordID);
+            if (selected is null)
+                throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
             if (selected.Fields == null || !selected.Fields.ContainsKey(update.FieldName))
                 throw new PluginMisconfigurationException($"Field '{update.FieldName}' does not exist in the record.");
@@ -203,8 +192,7 @@ namespace Apps.Lark.Actions
                 {
                     Fields = updatedFields,
                     Id = selected.Id,
-                    RecordId = selected.RecordId,
-                    RowIndex = selected.RowIndex
+                    RecordId = selected.RecordId
                 }
             };
         }
@@ -220,13 +208,11 @@ namespace Apps.Lark.Actions
             var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
             var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
 
-            for (int i = 0; i < items.Count; i++)
-                items[i].RowIndex = i;
+            var selectedRecord = items.FirstOrDefault(r => r.RecordId == record.RecordID);
+            if (selectedRecord is null)
+                throw new PluginMisconfigurationException(
+                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
-            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
-                throw new PluginMisconfigurationException($"Row index must be from 0 to {items.Count - 1}");
-
-            var selectedRecord = items[record.RowIndex];
 
             var allFields = new List<FieldItem>();
             string? pageToken = null;
@@ -298,12 +284,11 @@ namespace Apps.Lark.Actions
                 Method.Get);
             var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(requestRecords);
             var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
-            for (int i = 0; i < items.Count; i++) items[i].RowIndex = i;
 
-            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
-                throw new PluginMisconfigurationException($"Row index must be from 0 to {items.Count - 1}");
-
-            var selectedRecord = items[record.RowIndex];
+            var selectedRecord = items.FirstOrDefault(r => r.RecordId == record.RecordID);
+            if (selectedRecord is null)
+                throw new PluginMisconfigurationException(
+                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
             var allFields = new List<FieldItem>();
             string? pageToken = null;
@@ -370,12 +355,11 @@ namespace Apps.Lark.Actions
                 Method.Get);
             var recResp = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(recReq);
             var items = recResp.Data?.Items ?? new List<RecordItemDto>();
-            for (int i = 0; i < items.Count; i++) items[i].RowIndex = i;
+            var selected = items.FirstOrDefault(r => r.RecordId == record.RecordID);
 
-            if (record.RowIndex < 0 || record.RowIndex >= items.Count)
-                throw new PluginMisconfigurationException($"Row index must be from 0 to {items.Count - 1}");
-
-            var selected = items[record.RowIndex];
+            if (selected is null)
+                throw new PluginMisconfigurationException(
+                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
             var allFields = new List<FieldItem>();
             string? pageToken = null;

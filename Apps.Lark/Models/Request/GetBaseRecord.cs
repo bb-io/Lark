@@ -4,7 +4,7 @@ namespace Apps.Lark.Models.Request
 {
     public class GetBaseRecord
     {
-        [Display("Row index")]
-        public int RowIndex { get; set; }
+        [Display("Record ID")]
+        public string RecordID { get; set; }
     }
 }

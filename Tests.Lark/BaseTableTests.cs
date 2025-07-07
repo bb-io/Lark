@@ -24,7 +24,7 @@ namespace Tests.Lark
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.GetRecord(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
-                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" }, new GetBaseRecord { RowIndex = 0 });
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" }, new GetBaseRecord { RecordID = "recDdfpDYV" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -42,10 +42,10 @@ namespace Tests.Lark
                     FieldName = "Multi option choice",
                     //NewValue="Hello my new value from upate action 2"
                     //NewDateValue= DateTime.UtcNow.AddDays(2),
-                    NewValues = new List<string> { "Option 12", "Option 21" },
+                    NewValues = new List<string> { "Option 12", "Option 21345435" },
                     //Attachment = new FileReference { Name = "Test3.png" }
                 },
-                new GetBaseRecord { RowIndex = 6 });
+                new GetBaseRecord { RecordID = "recDdfpDYV" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -58,7 +58,7 @@ namespace Tests.Lark
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.GetPersonEntry(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
                 new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
-                new GetBaseRecord { RowIndex = 0 });
+                new GetBaseRecord { RecordID = "" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -71,7 +71,7 @@ namespace Tests.Lark
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.GetDateEntries(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
                 new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
-                new GetBaseRecord { RowIndex = 0 });
+                new GetBaseRecord { RecordID = "recDdfpDYV" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -84,7 +84,7 @@ namespace Tests.Lark
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.DownloadAttachments(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
                 new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
-                new GetBaseRecord { RowIndex = 0 });
+                new GetBaseRecord { RecordID = "recDdfpDYV" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);

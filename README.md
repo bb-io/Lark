@@ -13,7 +13,6 @@ Lark's comprehensive and in-depth open capabilities serve as a hub of informatio
 
 Before you can connect you need to make sure that you have a Lark account  and you are setted up as an admin and the bot is enabled for the necessary groups
 
-
 ## Creating Lark custom application
 
 To create a Lark custom application, follow these steps:

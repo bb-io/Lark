@@ -1,10 +1,12 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
+using Apps.Lark.Constants;
 using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Apps.Lark.Polling.Models;
 using Apps.Lark.Utils;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using RestSharp;
@@ -89,8 +91,7 @@ namespace Apps.Lark.Polling
         [PollingEvent("On base table new rows added", "Triggered when new rows are added to base table")]
         public async Task<PollingEventResponse<DateTimeMemory, RecordListResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<DateTimeMemory> request,
             [PollingEventParameter] BaseRequest baseId,
-            [PollingEventParameter] BaseTableRequest table,
-            [PollingEventParameter] RecordCreatedRequest createdAt)
+            [PollingEventParameter] BaseTableRequest table)
         {
             // first polling, init memory and return early
             if (request.Memory == null)
@@ -112,17 +113,19 @@ namespace Apps.Lark.Polling
             var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
             var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
             var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(item => item.FieldName, item => item);
+            var createdAtFieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(item => item.FieldTypeId == BaseFieldTypes.DateCreated)
+                    ?? throw new PluginMisconfigurationException("Selected table doesn't have a field with 'Date created' type. Add a field with 'Date created' type to the table via Lark user interface.");
 
             var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
             searchRecordsRequest.AddQueryParameter("page_size", "100");
-            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAt.FieldName));            
+            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAtFieldSchema.FieldName));            
             var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
 
             var receivedRecords = BaseRecordJsonParser
                 .ConvertToRecordsList(recordsResponse.Content ?? "", schemaByFieldName)
                 .Where(r =>
                 {
-                    var createdAtField = r.Fields.FirstOrDefault(f => f.FieldName == createdAt.FieldName);
+                    var createdAtField = r.Fields.FirstOrDefault(f => f.FieldId == createdAtFieldSchema.FieldId);
                     var recordCreatedAt = DateTime.Parse(createdAtField?.FieldValue ?? "").ToUniversalTime();
                     return recordCreatedAt > memory.LastPollingTime;
                 })

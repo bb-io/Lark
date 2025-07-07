@@ -46,8 +46,7 @@ namespace Tests.Lark
             var result = await actions.OnNewRowsAddedToBaseTable(
                 pollingRequest,
                 new BaseRequest { AppId= "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
-                new BaseTableRequest { TableId= "tblzSbOM8CQupYfE" },
-                new RecordCreatedRequest { FieldName = "Submitted on" }
+                new BaseTableRequest { TableId= "tblzSbOM8CQupYfE" }
             );
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
             Assert.IsNotNull(result);

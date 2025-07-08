@@ -94,9 +94,6 @@ namespace Apps.Lark.Actions
             };
         }
 
-
-
-
         [Action("Update base record", Description = "Updates base record")]
         public async Task<UpdateRecordDataDto> UpdateRecord([ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
@@ -340,6 +337,87 @@ namespace Apps.Lark.Actions
             };
         }
 
+        [Action("Get text/number entries from base table record", Description = "Gets multiline text and number entries from base table record")]
+        public async Task<TextNumberFieldResponse> GetTextNumberEntries(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table,
+            [ActionParameter] GetBaseRecord record)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var requestRecords = new RestRequest(
+                $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",
+                Method.Get);
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(requestRecords);
+            var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
+
+            var selectedRecord = items.FirstOrDefault(r => r.RecordId == record.RecordID);
+            if (selectedRecord is null)
+                throw new PluginMisconfigurationException(
+                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+
+            var allFields = new List<FieldItem>();
+            string? pageToken = null;
+            do
+            {
+                var requestFields = new RestRequest(
+                    $"/bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields",
+                    Method.Get);
+                if (!string.IsNullOrEmpty(pageToken))
+                    requestFields.AddParameter("page_token", pageToken);
+
+                var fieldsResponse = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(requestFields);
+                if (fieldsResponse?.Data?.Items != null)
+                {
+                    allFields.AddRange(fieldsResponse.Data.Items);
+                    pageToken = fieldsResponse.Data.HasMore ? fieldsResponse.Data.PageToken : null;
+                }
+                else
+                {
+                    pageToken = null;
+                }
+            } while (!string.IsNullOrEmpty(pageToken));
+
+            var targetFields = allFields.Where(f => f.Type == 1 || f.Type == 2).ToList();
+            var entries = new List<TextNumberFieldEntry>();
+
+            foreach (var field in targetFields)
+            {
+                if (selectedRecord.Fields == null
+                    || !selectedRecord.Fields.TryGetValue(field.FieldName, out var rawValue)
+                    || rawValue == null)
+                    continue;
+
+                if (field.Type == 1)
+                {
+                    entries.Add(new TextNumberFieldEntry
+                    {
+                        FieldId = field.FieldId,
+                        FieldName = field.FieldName,
+                        TextValue = rawValue.ToString(),
+                        NumberValue = null
+                    });
+                }
+                else if (field.Type == 2)
+                {
+                    if (double.TryParse(rawValue.ToString(), out var num))
+                    {
+                        entries.Add(new TextNumberFieldEntry
+                        {
+                            FieldId = field.FieldId,
+                            FieldName = field.FieldName,
+                            TextValue = null,
+                            NumberValue = num
+                        });
+                    }
+                }
+            }
+
+            return new TextNumberFieldResponse
+            {
+                Entries = entries
+            };
+        }
 
 
         [Action("Download attachments from base table record", Description = "Downloads all attachments from a record")]
@@ -416,9 +494,6 @@ namespace Apps.Lark.Actions
                 }
             }
             return result;
-        }
-
-
-       
+        }   
     }
 }

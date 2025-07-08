@@ -124,7 +124,8 @@ To get the Application ID and Application Secret, follow these steps:
 
 - **Search base tables** searches for base tables
 - **Get base record** gets a base record
-- **Update base record** updates a base record 
+- **Update base record** updates a base record. To update fields "Single option", "Multiline", please use input property "New value". To update field "Multiple options", please use input property "New values". 
+To update field "Date", please use input property "New date value". To update field "Attachment", please use input property "Attachment".
 - **Get person entry from base table record** gets a person entry from a base table record
 - **Get date entries from base table record** gets date entries from a base table record
 - **Download attachments from base table record** downloads attachments from a base table record

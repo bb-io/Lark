@@ -39,13 +39,13 @@ namespace Tests.Lark
                 new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
                 new UpdateRecordRequest
                 {
-                    FieldName = "Multi option choice",
-                    //NewValue="Hello my new value from upate action 2"
+                    FieldName = "Custom text column name",
+                    NewValue="Hello my new value from upate action locally"
                     //NewDateValue= DateTime.UtcNow.AddDays(2),
-                    NewValues = new List<string> { "Option 12", "Option 21345435" },
+                    //NewValues = new List<string> { "Option 12", "Option 21345435" },
                     //Attachment = new FileReference { Name = "Test3.png" }
                 },
-                new GetBaseRecord { RecordID = "recDdfpDYV" });
+                new GetBaseRecord { RecordID = "recuOXSfSwQlV8" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -70,6 +70,20 @@ namespace Tests.Lark
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.GetDateEntries(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
+                new GetBaseRecord { RecordID = "recDdfpDYV" });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
+
+
+        [TestMethod]
+        public async Task GetBaseRecorTextNumberTypeEntry_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetTextNumberEntries(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
                 new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
                 new GetBaseRecord { RecordID = "recDdfpDYV" });
 

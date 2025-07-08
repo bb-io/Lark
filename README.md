@@ -23,23 +23,23 @@ To create a Lark custom application, follow these steps:
    - **App Icon**: Upload an icon for your application.
    - **App Description**: Provide a brief description of your application.
  
-   ![example1](image/README/Lark-create-app-example.png)
+   ![example1](image/Lark-create-app-example.png)
 	
 4. Click on **Create** to create your application
 5. After creating the customn application, you will be redirected to the **Add features** page
  
-   ![example2](image/README/features-example.png)
+   ![example2](image/features-example.png)
 
 6. Select the features you want to add to your application. For current configuration, you will need **Bot**, **Web app**, **Workplace block** and **Base record view**.
 7. After configuring the features you need to release the app version
 
-   ![example3](image/README/release-version-example.png)
+   ![example3](image/release-version-example.png)
 
 ## Adding scopes
 
 To add scopes to your Lark application, follow to page **Permissions & Scopes**
 
-![example4](image/README/adding-scopes-example.png)
+![example4](image/adding-scopes-example.png)
 
 Click on **Add permission scopes to app** and select the scopes you want to add to your application.
 
@@ -95,7 +95,7 @@ To get the Application ID and Application Secret, follow these steps:
 3. In the left sidebar, click on **Credentials and Basic info**.
 4. You will find the **Application ID** and **Application Secret** in the **Credentials** section.
 
-   [example5](image/README/credentials-example.png)
+   [example5](image/credentials-example.png)
 
 
 ## Connecting
@@ -150,7 +150,7 @@ To update field "Date", please use input property "New date value". To update fi
 - **On user added to group** triggers when a user is added to a group
 - **On file edited** triggers when a file is edited in a Lark channel or directly to a user
 - **On new rows added** triggers when new rows are added to a spreadsheet
-- **On base table new rows added** triggers when new rows are added to a base table
+- **On base table new rows added** triggers when new rows are added to a base table. To use this event you need to configure adding to your table the field "Date created"(Type: 1001)
 
 
 ## Feedback

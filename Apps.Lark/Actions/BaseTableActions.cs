@@ -67,7 +67,7 @@ namespace Apps.Lark.Actions
             var schemaJson = JsonConvert.SerializeObject(schemaByFieldName.Values, Formatting.Indented);
 
             var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
-            searchRecordsRequest.AddQueryParameter("page_size", "1");
+            searchRecordsRequest.AddQueryParameter("page_size", "100");
             searchRecordsRequest.AddJsonBody(new
             {
                 filter = new
@@ -312,72 +312,65 @@ namespace Apps.Lark.Actions
             };
         }
 
-        [Action("Get date entries from base table record", Description = "Gets date entries from base table record as DateTime")]
+        [Action("Get date entry from base table record", Description = "Gets date entry from base table record as DateTime")]
         public async Task<DateFieldResponse> GetDateEntries(
             [ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
-            [ActionParameter] GetBaseRecord record)
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetFieldRequest field)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var requestRecords = new RestRequest(
-                $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",
-                Method.Get);
-            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(requestRecords);
-            var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(x => x.FieldName, x => x);
 
-            var selectedRecord = items.FirstOrDefault(r => r.RecordId == record.RecordID);
-            if (selectedRecord is null)
-                throw new PluginMisconfigurationException(
-                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+            var fieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(x => x.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Field with ID '{field.FieldId}' not found in table '{table.TableId}'.");
+            if (fieldSchema.FieldTypeId != 5 && fieldSchema.FieldTypeId != 1001 && fieldSchema.FieldTypeId != 1002)
+                throw new PluginMisconfigurationException($"Field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') is not a date field.");
 
-            var allFields = new List<FieldItem>();
-            string? pageToken = null;
-            do
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "100");
+            searchRecordsRequest.AddJsonBody(new
             {
-                var requestFields = new RestRequest(
-                    $"/bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields",
-                    Method.Get);
-                if (!string.IsNullOrEmpty(pageToken))
-                    requestFields.AddParameter("page_token", pageToken);
-
-                var fieldsResponse = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(requestFields);
-                if (fieldsResponse?.Data?.Items != null)
+                filter = new
                 {
-                    allFields.AddRange(fieldsResponse.Data.Items);
-                    pageToken = fieldsResponse.Data.HasMore ? fieldsResponse.Data.PageToken : null;
-                }
-                else
-                {
-                    pageToken = null;
-                }
-            } while (!string.IsNullOrEmpty(pageToken));
-
-            var dateFields = allFields.Where(f => f.Type == 5).ToList();
-            var dateEntries = new List<DateFieldEntry>();
-
-            foreach (var df in dateFields)
-            {
-                if (selectedRecord.Fields != null
-                    && selectedRecord.Fields.TryGetValue(df.FieldName, out var rawValue)
-                    && rawValue != null)
-                {
-                    if (long.TryParse(rawValue.ToString(), out var ms))
+                    conjunction = "and",
+                    conditions = new[]
                     {
-                        var dto = DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime;
-                        dateEntries.Add(new DateFieldEntry
+                        new
                         {
-                            FieldId = df.FieldId,
-                            FieldName = df.FieldName,
-                            Date = dto
-                        });
+                            field_name = "Request ID",
+                            @operator = "is",
+                            value = new[] { record.RecordID }
+                        }
                     }
                 }
-            }
+            });
+
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
+            var recordsResponseContent = recordsResponse.Content
+                ?? throw new PluginMisconfigurationException("No response content received from records search.");
+
+            var receivedRecords = BaseRecordJsonParser
+                .ConvertToRecordsList(recordsResponseContent, schemaByFieldName)
+                .ToList();
+
+            if (!receivedRecords.Any())
+                throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+
+            var selectedRecord = receivedRecords.First();
+
+            var dateField = selectedRecord.Fields.FirstOrDefault(f => f.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Date field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') not found in record '{record.RecordID}'.");
+
+            if (!DateTime.TryParse(dateField.FieldValue, out var dateValue))
+                throw new PluginMisconfigurationException($"Unable to parse date value '{dateField.FieldValue}' for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
 
             return new DateFieldResponse
             {
-                DateFields = dateEntries
+                DateValue = dateValue
             };
         }
 

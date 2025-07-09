@@ -21,6 +21,9 @@ namespace Apps.Lark.Models.Response
 
         [JsonProperty("items")]
         public List<UserItem> Items { get; set; }
+
+        [JsonProperty("page_token")]
+        public string PageToken { get; set; }
     }
 
     public class UserItem

@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <Folder Include="TestFiles\" />
+    <Folder Include="TestFiles\Output\" />
   </ItemGroup>
 
   <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="https://json.schemastore.org/assetlinks.json" /></VisualStudio></ProjectExtensions>

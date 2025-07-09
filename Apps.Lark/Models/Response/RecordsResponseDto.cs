@@ -41,7 +41,6 @@ namespace Apps.Lark.Models.Response
         public string? RecordId { get; set; }
         
 
-        public int RowIndex { get; set; }
 
         [Display("Field values")]
         public List<string> FieldValues

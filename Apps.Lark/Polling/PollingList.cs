@@ -1,20 +1,26 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
+using Apps.Lark.Constants;
+using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Apps.Lark.Polling.Models;
-using Blackbird.Applications.Sdk.Common;
+using Apps.Lark.Utils;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Newtonsoft.Json;
 using RestSharp;
+using System.Text;
 
 namespace Apps.Lark.Polling
 {
     [PollingEventList]
-    public class PollingList(InvocationContext invocationContext) : Invocable(invocationContext)
+    public class PollingList(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
         [PollingEvent("On new rows added", "Triggered when new rows are added to the sheet")]
-        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request, 
+        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request,
             [PollingEventParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
@@ -86,87 +92,79 @@ namespace Apps.Lark.Polling
 
 
         [PollingEvent("On base table new rows added", "Triggered when new rows are added to base table")]
-        public async Task<PollingEventResponse<NewRowAddedMemory, RecordsResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<NewRowAddedMemory> request,
+        public async Task<PollingEventResponse<DateTimeMemory, RecordListResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<DateTimeMemory> request,
             [PollingEventParameter] BaseRequest baseId,
             [PollingEventParameter] BaseTableRequest table)
         {
-            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-
-            var listRecords = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records", Method.Get);
-
-            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(listRecords);
-
-            if (recordsResponse?.Data?.Items == null)
-            {
-                return new PollingEventResponse<NewRowAddedMemory, RecordsResponse>
-                {
-                    FlyBird = false,
-                    Memory = request.Memory ?? new NewRowAddedMemory(),
-                    Result = null
-                };
-            }
-
-            var validRecords = recordsResponse.Data.Items
-                 .Select((item, index) => new { Item = item, Index = index })
-                 .Where(record => record.Item.Fields?.Any(kv => kv.Value != null) ?? false)
-                 .ToList();
-
-            int currentRowCount = validRecords.Count;
-
+            // first polling, init memory and return early
             if (request.Memory == null)
             {
-                request.Memory = new NewRowAddedMemory
-                {
-                    LastRowCount = currentRowCount,
-                    LastPollingTime = DateTime.UtcNow,
-                    Triggered = false
-                };
-
-                return new PollingEventResponse<NewRowAddedMemory, RecordsResponse>
+                return new PollingEventResponse<DateTimeMemory, RecordListResponse>
                 {
                     FlyBird = false,
-                    Memory = request.Memory,
+                    Memory = new DateTimeMemory { LastPollingTime = DateTime.UtcNow },
                     Result = null
                 };
             }
 
+            // main logic
             var memory = request.Memory;
-            var newRecordsList = new List<RecordItemDto>();
+            var lastPollingDay = memory.LastPollingTime.Date;
+            var pollingStartTime = DateTime.UtcNow;
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            if (currentRowCount > memory.LastRowCount)
-            {
-                var newRecords = validRecords
-                    .Where(record => record.Index >= memory.LastRowCount)
-                    .ToList();
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(item => item.FieldName, item => item);
+            var createdAtFieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(item => item.FieldTypeId == BaseFieldTypes.DateCreated)
+                    ?? throw new PluginMisconfigurationException("Selected table doesn't have a field with 'Date created' type. Add a field with 'Date created' type to the table via Lark user interface.");
 
-                foreach (var record in newRecords)
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "100");
+            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAtFieldSchema.FieldName));            
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
+
+            var receivedRecords = BaseRecordJsonParser
+                .ConvertToRecordsList(recordsResponse.Content ?? "", schemaByFieldName)
+                .Where(r =>
                 {
-                    record.Item.RowIndex = record.Index;
-                    newRecordsList.Add(record.Item);
-                }
-            }
+                    var createdAtField = r.Fields.FirstOrDefault(f => f.FieldId == createdAtFieldSchema.FieldId);
+                    var recordCreatedAt = DateTime.Parse(createdAtField?.FieldValue ?? "").ToUniversalTime();
+                    return recordCreatedAt > memory.LastPollingTime;
+                })
+                .ToList();
 
-            memory.LastRowCount = currentRowCount;
-            memory.LastPollingTime = DateTime.UtcNow;
-            memory.Triggered = newRecordsList.Any();
+            var recordsJson = await Task.WhenAll(
+                receivedRecords.Select(async record =>
+                {
+                    var jsonString = JsonConvert.SerializeObject(record, Formatting.Indented);
+                    var jsonBytes = Encoding.UTF8.GetBytes(jsonString);
 
-            var newRowResult = new RecordsResponse
+                    return await fileManagementClient.UploadAsync(
+                        new MemoryStream(jsonBytes),
+                        "application/json",
+                        $"{record.RecordId}.json"
+                    );
+                })
+            );
+
+            memory.LastPollingTime = pollingStartTime;
+            return new PollingEventResponse<DateTimeMemory, RecordListResponse>
             {
-                Records = newRecordsList.Any() ? newRecordsList : null
-            };
-
-            return new PollingEventResponse<NewRowAddedMemory, RecordsResponse>
-            {
-                FlyBird = newRecordsList.Any(),
+                FlyBird = receivedRecords.Count > 0,
                 Memory = memory,
-                Result = newRowResult
+                Result = new RecordListResponse()
+                {
+                    BaseId = baseId.AppId,
+                    TableId = table.TableId,
+                    Records = receivedRecords,
+                    RecordsJson = recordsJson,
+                }
             };
         }
 
 
-
-
-        private string ExtractColumnRange(string fullRange)
+        private static string ExtractColumnRange(string fullRange)
         {
             if (string.IsNullOrEmpty(fullRange))
                 return "A:A";
@@ -181,6 +179,45 @@ namespace Apps.Lark.Polling
             string endColumn = columns[1].TrimEnd('1', '2', '3', '4', '5', '6', '7', '8', '9', '0');
 
             return $"{startColumn}:{endColumn}";
+        }
+
+        /// <summary>
+        /// Filter format definition:
+        /// https://open.larksuite.com/document/uAjLw4CM/ukTMukTMukTM/reference/bitable-v1/app-table-record/search
+        /// </summary>
+        private static object GenerateBaseRecordsSearchFilter(DateTime lastPollingDay, string fieldName)
+        {
+            var currentDay = lastPollingDay;
+            var tomorrow = DateTime.UtcNow.Date.AddDays(1);
+
+            var conditions = new List<object>();
+
+            // include tomorrow to deal with timezone conversions of time to date
+            while (currentDay <= tomorrow)
+            {
+                var unixTimestamp = ((DateTimeOffset)currentDay).ToUnixTimeMilliseconds().ToString();
+                conditions.Add(new
+                {
+                    field_name = fieldName,
+                    @operator = "is",
+                    value = new object[]
+                    {
+                        "ExactDate",
+                        unixTimestamp
+                    }
+                });
+                currentDay = currentDay.AddDays(1);
+            }
+
+            return new
+            {
+                automatic_fields = false,
+                filter = new
+                {
+                    conjunction = "or",
+                    conditions,
+                },
+            };
         }
     }
 }

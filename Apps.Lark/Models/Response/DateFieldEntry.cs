@@ -20,8 +20,8 @@ namespace Apps.Lark.Models.Response
 
     public class DateFieldResponse
     {
-        [JsonProperty("date_fields")]
-        [Display("Date fields")]
-        public List<DateFieldEntry> DateFields { get; set; } = new();
+        [Display("Date value")]
+       public DateTime DateValue { get; set; }
+       
     }
 }

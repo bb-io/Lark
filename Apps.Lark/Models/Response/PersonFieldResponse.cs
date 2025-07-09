@@ -5,9 +5,9 @@ namespace Apps.Lark.Models.Response
 {
     public class PersonFieldResponse
     {
-        [JsonProperty("person_fields")]
-        [Display("Person fields")]
-        public List<PersonFieldEntry> PersonFields { get; set; }
+        [JsonProperty("person")]
+        [Display("Person")]
+        public PersonData Person { get; set; }
     }
 
     public class PersonFieldEntry
@@ -27,23 +27,14 @@ namespace Apps.Lark.Models.Response
     public class PersonData
     {
         [JsonProperty("id")]
+        [Display("User ID")]
         public string Id { get; set; }
 
-        [Display("User Mention")]
-        public string? UserMention => $"<at user_id=\"{Id}\">{Name}</at>";
-
         [JsonProperty("name")]
+        [Display("Name")]
         public string Name { get; set; }
 
-        [JsonProperty("email")]
-        public string Email { get; set; }
-
-        [JsonProperty("en_name")]
-        [Display("English name")]
-        public string EnName { get; set; }
-
-        [JsonProperty("avatar_url")]
-        [Display("Avatar URL")]
-        public string AvatarUrl { get; set; }
+        [Display("User mention")]
+        public string UserMention => $"<at user_id=\"{Id}\">{Name}</at>";
     }
 }

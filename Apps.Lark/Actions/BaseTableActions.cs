@@ -10,6 +10,7 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Models;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
@@ -256,7 +257,7 @@ namespace Apps.Lark.Actions
                 throw new PluginMisconfigurationException(
                     $"Field '{fieldSchema.FieldName}' (ID: '{field.FieldId}', Type: {fieldSchema.FieldTypeId}) is not a person field");
 
-            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search?user_id_type=user_id", Method.Post);
             searchRecordsRequest.AddQueryParameter("page_size", "100");
             searchRecordsRequest.AddJsonBody(new
             {
@@ -559,49 +560,55 @@ namespace Apps.Lark.Actions
             var recordsResponseContent = recordsResponse.Data
                 ?? throw new PluginMisconfigurationException("No response content received from records search.");
 
-            Console.WriteLine($"Raw records response for record {record.RecordID}: {recordsResponseContent}");
-
             var selectedRecord = recordsResponse.Data?.Items?.FirstOrDefault(r => r.RecordId == record.RecordID)
                 ?? throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
             if (selectedRecord.Fields == null || !selectedRecord.Fields.TryGetValue(fieldSchema.FieldName, out var rawFieldValue) || rawFieldValue == null)
                 throw new PluginMisconfigurationException($"Attachment field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') not found or empty in record '{record.RecordID}'.");
 
-            var tokens = new List<string>();
+            var attachments = new List<(string Url, string Name, string ContentType)>();
             if (rawFieldValue is JArray arr)
             {
-                tokens = arr.ToObject<List<JObject>>()
-                    .Select(o => o.Value<string>("file_token"))
-                    .Where(t => !string.IsNullOrEmpty(t))
+                attachments = arr.ToObject<List<JObject>>()
+                    .Select(o => (
+                        Url: o.Value<string>("url"),
+                        Name: o.Value<string>("name"),
+                        ContentType: o.Value<string>("type")))
+                    .Where(a => !string.IsNullOrEmpty(a.Url) && !string.IsNullOrEmpty(a.Name))
                     .ToList();
             }
             else if (rawFieldValue is JObject obj)
             {
-                var token = obj.Value<string>("file_token");
-                if (!string.IsNullOrEmpty(token))
-                    tokens.Add(token);
+                var url = obj.Value<string>("url");
+                var name = obj.Value<string>("name");
+                var contentType = obj.Value<string>("type");
+                if (!string.IsNullOrEmpty(url) && !string.IsNullOrEmpty(name))
+                    attachments.Add((url, name, contentType));
             }
 
-            if (!tokens.Any())
-                throw new PluginMisconfigurationException(
-                    $"No valid file tokens found in attachment field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') for record '{record.RecordID}'.");
+            if (!attachments.Any())
+                throw new PluginApplicationException(
+                    $"No valid attachments found in field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') for record '{record.RecordID}'.");
 
-            var batchReq = new RestRequest("/drive/v1/medias/batch_get_tmp_download_url", Method.Get);
-            foreach (var token in tokens)
-                batchReq.AddParameter("file_tokens", token);
-
-            var batchResp = await larkClient.ExecuteWithErrorHandling<BatchUrlResponseDto>(batchReq);
-            if (batchResp.Data?.TmpDownloadUrls == null || !batchResp.Data.TmpDownloadUrls.Any())
-                throw new PluginMisconfigurationException($"Failed to retrieve download URLs for file tokens in field '{fieldSchema.FieldName}'.");
-
-            foreach (var item in batchResp.Data.TmpDownloadUrls)
+            foreach (var attachment in attachments)
             {
-                var fileContent = await FileDownloader.DownloadFileBytes(item.TmpDownloadUrl);
-                var fileRef = await fileManagementClient.UploadAsync(
-                    fileContent.FileStream,
-                    fileContent.ContentType,
-                    fileContent.Name);
-                result.Files.Add(new FileResponse { File = fileRef });
+                try
+                {
+                    var downloadRequest = new RestRequest(attachment.Url, Method.Get);
+                    var downloadResponse = await larkClient.ExecuteAsync(downloadRequest);
+                    if (!downloadResponse.IsSuccessStatusCode)
+                        throw new PluginApplicationException($"File download failed; Code: {downloadResponse.StatusCode}; URL: {attachment.Url}");
+
+                    string contentType = attachment.ContentType ?? downloadResponse.ContentType ?? "application/octet-stream";
+                    var fileContent = new BlackbirdFile(new MemoryStream(downloadResponse.RawBytes), attachment.Name, contentType);
+                    var fileRef = await fileManagementClient.UploadAsync(fileContent.FileStream, contentType, attachment.Name);
+                    result.Files.Add(new FileResponse { File = fileRef });
+                }
+                catch (Exception ex)
+                {
+                    throw new PluginMisconfigurationException(
+                        $"Failed to process attachment '{attachment.Name}' in field '{fieldSchema.FieldName}' for record '{record.RecordID}': {ex.Message}");
+                }
             }
 
             return result;

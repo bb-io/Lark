@@ -58,7 +58,7 @@ namespace Tests.Lark
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.GetPersonEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
-                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+                new GetBaseRecord { RecordID = "recmCOhl6k" },
                 new GetFieldRequest { FieldId= "fldCC7FWxL" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);

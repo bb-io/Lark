@@ -1,5 +1,6 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
+using Apps.Lark.Constants;
 using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
@@ -436,6 +437,49 @@ namespace Apps.Lark.Actions
             return new TextFieldResponse
             {
                 TextValue = textField.FieldValue ?? string.Empty
+            };
+        }
+
+        [Action("Get multiple option value from base table record", Description = "Gets a multiple select value from a base table record")]
+        public async Task<MultiOptionResponse> GetMultiOptionValueFromRecord(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table,
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetFieldRequest field)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var fieldSchema = tableSchemaResponse.Data.Items
+                .Where(x => x.FieldTypeId == BaseFieldTypes.MultipleOptions && x.FieldId == field.FieldId)
+                .FirstOrDefault();
+
+            if (fieldSchema == null)
+                throw new PluginMisconfigurationException($"Field is not found in table or is not a multiple option field");
+
+            if (fieldSchema.FieldTypeName.Contains("'"))
+                throw new PluginMisconfigurationException($"Fields with a single quote in name are not supported.");
+
+            var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}", Method.Get);
+            var recordResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
+            var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
+                ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
+
+            List<string> selectedValues = [];
+
+            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
+            if (fieldJToken?.Type == JTokenType.Array)
+            {
+                selectedValues = fieldJToken
+                    .Select(v => v?.Value<string>() ?? string.Empty)
+                    .Where(v => !string.IsNullOrEmpty(v))
+                    .ToList();
+            }
+
+            return new MultiOptionResponse
+            {
+                SelectedValues = selectedValues
             };
         }
 

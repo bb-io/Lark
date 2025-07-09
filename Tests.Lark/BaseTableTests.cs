@@ -40,10 +40,10 @@ namespace Tests.Lark
                 new UpdateRecordRequest
                 {
                     FieldName = "Custom text column name",
-                    NewValue="Hello my new value from upate action locally"
+                    //NewValue="Hello my new value from upate action locally"
                     //NewDateValue= DateTime.UtcNow.AddDays(2),
                     //NewValues = new List<string> { "Option 12", "Option 21345435" },
-                    //Attachment = new FileReference { Name = "Test3.png" }
+                    Attachment = new FileReference { Name = "Test3.png" }
                 },
                 new GetBaseRecord { RecordID = "recuOXSfSwQlV8" });
 
@@ -56,9 +56,10 @@ namespace Tests.Lark
         public async Task GetBaseRecordPersonTypeEntry_IssSuccess()
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
-            var response = await action.GetPersonEntry(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
-                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
-                new GetBaseRecord { RecordID = "" });
+            var response = await action.GetPersonEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+                new GetFieldRequest { FieldId= "fldCC7FWxL" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -81,12 +82,27 @@ namespace Tests.Lark
 
 
         [TestMethod]
-        public async Task GetBaseRecorTextNumberTypeEntry_IssSuccess()
+        public async Task GetBaseRecordTextTypeEntry_IssSuccess()
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
-            var response = await action.GetTextNumberEntries(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
-                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
-                new GetBaseRecord { RecordID = "recDdfpDYV" });
+            var response = await action.GetTextEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+                new GetFieldRequest { FieldId= "fldKO35rlm" });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
+
+        [TestMethod]
+        public async Task GetBaseRecordNumberTypeEntry_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetNumberEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+                new GetFieldRequest { FieldId = "fldVfDuLV4" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -99,7 +115,8 @@ namespace Tests.Lark
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.DownloadAttachments(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
-                new GetBaseRecord { RecordID = "recuQsfE1GO90j" });
+                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+                new GetFieldRequest { FieldId= "fldTXqfdaW" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);

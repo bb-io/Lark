@@ -241,74 +241,88 @@ namespace Apps.Lark.Actions
         [Action("Get person entry from base table record", Description = "Gets person entry from base table record")]
         public async Task<PersonFieldResponse> GetPersonEntry([ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
-            [ActionParameter] GetBaseRecord record)
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetFieldRequest field)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var request = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id", Method.Get);
-            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
-            var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(x => x.FieldName, x => x);
 
-            var selectedRecord = items.FirstOrDefault(r => r.RecordId == record.RecordID);
-            if (selectedRecord is null)
+            var fieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(x => x.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Field with ID '{field.FieldId}' not found in table '{table.TableId}'.");
+            if (fieldSchema.FieldTypeId != 11 && fieldSchema.FieldTypeId != 1003 && fieldSchema.FieldTypeId != 1004)
                 throw new PluginMisconfigurationException(
-                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+                    $"Field '{fieldSchema.FieldName}' (ID: '{field.FieldId}', Type: {fieldSchema.FieldTypeId}) is not a person field");
 
-
-            var allFields = new List<FieldItem>();
-            string? pageToken = null;
-
-            do
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "100");
+            searchRecordsRequest.AddJsonBody(new
             {
-                var requestFields = new RestRequest($"/bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
-                if (!string.IsNullOrEmpty(pageToken))
-                    requestFields.AddParameter("page_token", pageToken);
-
-                var fieldsResponse = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(requestFields);
-                if (fieldsResponse?.Data?.Items != null)
+                filter = new
                 {
-                    allFields.AddRange(fieldsResponse.Data.Items);
-                    pageToken = fieldsResponse.Data.HasMore ? fieldsResponse.Data.PageToken : null;
+                    conjunction = "and",
+                    conditions = new[]
+                    {
+                        new
+                        {
+                            field_name = "Request ID",
+                            @operator = "is",
+                            value = new[] { record.RecordID }
+                        }
+                    }
                 }
-                else
-                {
-                    pageToken = null;
-                }
-            } while (!string.IsNullOrEmpty(pageToken));
+            });
 
-            var personFields = allFields.Where(f => f.Type == 11).ToList();
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(searchRecordsRequest); 
+            var recordsResponseContent = recordsResponse.Data
+                ?? throw new PluginMisconfigurationException("No response content received from records search.");
 
-            var personFieldEntries = new List<PersonFieldEntry>();
+            var selectedRecord = recordsResponse.Data?.Items?.FirstOrDefault(r => r.RecordId == record.RecordID)
+                ?? throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+            var rawFields = selectedRecord.Fields
+                ?? throw new PluginMisconfigurationException($"No fields found for record '{record.RecordID}'.");
 
-            foreach (var personField in personFields)
+ 
+            if (!rawFields.TryGetValue(fieldSchema.FieldName, out var rawFieldValue) || rawFieldValue == null)
+                throw new PluginMisconfigurationException($"Person field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') not found or empty in record '{record.RecordID}'.");
+
+            var users = new List<JObject>();
+            if (rawFieldValue is JArray arr)
             {
-                if (selectedRecord.Fields != null && selectedRecord.Fields.TryGetValue(personField.FieldName, out var fieldValue) && fieldValue != null)
-                {
-                    var users = new List<PersonData>();
+                users = arr.Cast<JObject>().ToList();
+            }
+            else if (rawFieldValue is JObject obj)
+            {
+                users.Add(obj);
+            }
 
-                    if (fieldValue is JArray userArray)
-                    {
-                        users = userArray.ToObject<List<PersonData>>() ?? new List<PersonData>();
-                    }
-                    else if (fieldValue is JObject userObject)
-                    {
-                        var user = userObject.ToObject<PersonData>();
-                        if (user != null)
-                            users.Add(user);
-                    }
+            if (!users.Any())
+                throw new PluginMisconfigurationException(
+                    $"No valid user data found in person field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') for record '{record.RecordID}'.");
 
-                    personFieldEntries.Add(new PersonFieldEntry
-                    {
-                        FieldName = personField.FieldName,
-                        FieldId = personField.FieldId,
-                        Users = users
-                    });
-                }
+            var user = users.First();
+            var userId = user["id"]?.ToString();
+            var userName = user["name"]?.ToString();
+
+            if (string.IsNullOrEmpty(userName))
+                throw new PluginMisconfigurationException(
+                    $"Person field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') in record '{record.RecordID}' has no valid name.");
+
+
+            if (string.IsNullOrEmpty(userId) )
+            {
+                userId = userName;
             }
 
             return new PersonFieldResponse
             {
-                PersonFields = personFieldEntries.Any() ? personFieldEntries : new List<PersonFieldEntry>()
+                Person = new PersonData
+                {
+                    Id = userId,
+                    Name = userName
+                }
             };
         }
 
@@ -374,85 +388,130 @@ namespace Apps.Lark.Actions
             };
         }
 
-        [Action("Get text/number entries from base table record", Description = "Gets multiline text and number entries from base table record")]
-        public async Task<TextNumberFieldResponse> GetTextNumberEntries(
+
+        [Action("Get text entry from base table record", Description = "Gets a text entry from a base table record")]
+        public async Task<TextFieldResponse> GetTextEntry(
             [ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
-            [ActionParameter] GetBaseRecord record)
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetFieldRequest field)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var requestRecords = new RestRequest(
-                $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",
-                Method.Get);
-            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(requestRecords);
-            var items = recordsResponse.Data?.Items ?? new List<RecordItemDto>();
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(x => x.FieldName, x => x);
 
-            var selectedRecord = items.FirstOrDefault(r => r.RecordId == record.RecordID);
-            if (selectedRecord is null)
+            var fieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(x => x.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Field with ID '{field.FieldId}' not found in table '{table.TableId}'.");
+            if (fieldSchema.FieldTypeId != 1 && fieldSchema.FieldTypeId != 3)
                 throw new PluginMisconfigurationException(
-                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+                    $"Field '{fieldSchema.FieldName}' (ID: '{field.FieldId}', Type: {fieldSchema.FieldTypeId}) is not a text field");
 
-            var allFields = new List<FieldItem>();
-            string? pageToken = null;
-            do
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "100");
+            searchRecordsRequest.AddJsonBody(new
             {
-                var requestFields = new RestRequest(
-                    $"/bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields",
-                    Method.Get);
-                if (!string.IsNullOrEmpty(pageToken))
-                    requestFields.AddParameter("page_token", pageToken);
-
-                var fieldsResponse = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(requestFields);
-                if (fieldsResponse?.Data?.Items != null)
+                filter = new
                 {
-                    allFields.AddRange(fieldsResponse.Data.Items);
-                    pageToken = fieldsResponse.Data.HasMore ? fieldsResponse.Data.PageToken : null;
-                }
-                else
-                {
-                    pageToken = null;
-                }
-            } while (!string.IsNullOrEmpty(pageToken));
-
-            var targetFields = allFields.Where(f => f.Type == 1 || f.Type == 2).ToList();
-            var entries = new List<TextNumberFieldEntry>();
-
-            foreach (var field in targetFields)
-            {
-                if (selectedRecord.Fields == null
-                    || !selectedRecord.Fields.TryGetValue(field.FieldName, out var rawValue)
-                    || rawValue == null)
-                    continue;
-
-                if (field.Type == 1)
-                {
-                    entries.Add(new TextNumberFieldEntry
+                    conjunction = "and",
+                    conditions = new[]
                     {
-                        FieldId = field.FieldId,
-                        FieldName = field.FieldName,
-                        TextValue = rawValue.ToString(),
-                        NumberValue = null
-                    });
-                }
-                else if (field.Type == 2)
-                {
-                    if (double.TryParse(rawValue.ToString(), out var num))
-                    {
-                        entries.Add(new TextNumberFieldEntry
+                        new
                         {
-                            FieldId = field.FieldId,
-                            FieldName = field.FieldName,
-                            TextValue = null,
-                            NumberValue = num
-                        });
+                            field_name = "Request ID",
+                            @operator = "is",
+                            value = new[] { record.RecordID }
+                        }
                     }
                 }
-            }
+            });
 
-            return new TextNumberFieldResponse
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
+            var recordsResponseContent = recordsResponse.Content
+                ?? throw new PluginMisconfigurationException("No response content received from records search.");
+
+            var receivedRecords = BaseRecordJsonParser
+                .ConvertToRecordsList(recordsResponseContent, schemaByFieldName)
+                .ToList();
+
+            if (!receivedRecords.Any())
+                throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+
+            var selectedRecord = receivedRecords.First();
+
+            var textField = selectedRecord.Fields.FirstOrDefault(f => f.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Text field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') not found in record '{record.RecordID}'.");
+
+            return new TextFieldResponse
             {
-                Entries = entries
+                TextValue = textField.FieldValue ?? string.Empty
+            };
+        }
+
+
+        [Action("Get number entry from base table record", Description = "Gets a number entry from a base table record")]
+        public async Task<NumberFieldResponse> GetNumberEntry(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table,
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetFieldRequest field)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(x => x.FieldName, x => x);
+
+            var fieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(x => x.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Field with ID '{field.FieldId}' not found in table '{table.TableId}'.");
+            if (fieldSchema.FieldTypeId != 2)
+                throw new PluginMisconfigurationException(
+                    $"Field '{fieldSchema.FieldName}' (ID: '{field.FieldId}', Type: {fieldSchema.FieldTypeId}) is not a number field");
+
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "100");
+            searchRecordsRequest.AddJsonBody(new
+            {
+                filter = new
+                {
+                    conjunction = "and",
+                    conditions = new[]
+                    {
+                        new
+                        {
+                            field_name = "Request ID",
+                            @operator = "is",
+                            value = new[] { record.RecordID }
+                        }
+                    }
+                }
+            });
+
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
+            var recordsResponseContent = recordsResponse.Content
+                ?? throw new PluginMisconfigurationException("No response content received from records search.");
+
+
+            var receivedRecords = BaseRecordJsonParser
+                .ConvertToRecordsList(recordsResponseContent, schemaByFieldName)
+                .ToList();
+
+            if (!receivedRecords.Any())
+                throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+
+            var selectedRecord = receivedRecords.First();
+
+            var numberField = selectedRecord.Fields.FirstOrDefault(f => f.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Number field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') not found in record '{record.RecordID}'.");
+
+            if (!double.TryParse(numberField.FieldValue, out var numberValue))
+                throw new PluginMisconfigurationException(
+                    $"Unable to parse number value '{numberField.FieldValue}' for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
+
+            return new NumberFieldResponse
+            {
+                NumberValue = numberValue
             };
         }
 
@@ -461,75 +520,90 @@ namespace Apps.Lark.Actions
         public async Task<DownloadAttachmentsResponse> DownloadAttachments(
             [ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
-            [ActionParameter] GetBaseRecord record)
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetFieldRequest field)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-
-            var recReq = new RestRequest(
-                $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",
-                Method.Get);
-            var recResp = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(recReq);
-            var items = recResp.Data?.Items ?? new List<RecordItemDto>();
-            var selected = items.FirstOrDefault(r => r.RecordId == record.RecordID);
-
-            if (selected is null)
-                throw new PluginMisconfigurationException(
-                    $"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
-
-            var allFields = new List<FieldItem>();
-            string? pageToken = null;
-            do
-            {
-                var fldReq = new RestRequest(
-                    $"/bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields",
-                    Method.Get);
-                if (!string.IsNullOrEmpty(pageToken))
-                    fldReq.AddParameter("page_token", pageToken);
-
-                var fldResp = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(fldReq);
-                if (fldResp?.Data?.Items != null)
-                {
-                    allFields.AddRange(fldResp.Data.Items);
-                    pageToken = fldResp.Data.HasMore ? fldResp.Data.PageToken : null;
-                }
-                else pageToken = null;
-            } while (!string.IsNullOrEmpty(pageToken));
-
-            var attFields = allFields.Where(f => f.Type == 17).ToList();
-
             var result = new DownloadAttachmentsResponse();
 
-            foreach (var fld in attFields)
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(x => x.FieldName, x => x);
+
+            var fieldSchema = tableSchemaResponse.Data.Items.FirstOrDefault(x => x.FieldId == field.FieldId)
+                ?? throw new PluginMisconfigurationException($"Field with ID '{field.FieldId}' not found in table '{table.TableId}'.");
+            if (fieldSchema.FieldTypeId != 17)
+                throw new PluginMisconfigurationException(
+                    $"Field '{fieldSchema.FieldName}' (ID: '{field.FieldId}', Type: {fieldSchema.FieldTypeId}) is not an attachment field (expected type: 17).");
+
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "1");
+            searchRecordsRequest.AddJsonBody(new
             {
-                if (selected.Fields == null
-                 || !selected.Fields.TryGetValue(fld.FieldName, out var raw)
-                 || raw == null) continue;
-
-                var tokens = (raw is JArray arr)
-                    ? arr.ToObject<List<JObject>>()
-                          .Select(o => o.Value<string>("file_token"))
-                          .Where(t => !string.IsNullOrEmpty(t))
-                          .ToList()
-                    : new List<string>();
-
-                if (!tokens.Any()) continue;
-
-                var batchReq = new RestRequest("/drive/v1/medias/batch_get_tmp_download_url", Method.Get);
-                foreach (var t in tokens)
-                    batchReq.AddParameter("file_tokens", t);
-
-                var batchResp = await larkClient.ExecuteWithErrorHandling<BatchUrlResponseDto>(batchReq);
-
-                foreach (var item in batchResp.Data.TmpDownloadUrls)
+                filter = new
                 {
-                    var fileContent = await FileDownloader.DownloadFileBytes(item.TmpDownloadUrl);
-
-                    var fileRef = await fileManagementClient
-                        .UploadAsync(fileContent.FileStream, fileContent.ContentType, fileContent.Name);
-
-                    result.Files.Add(new FileResponse { File = fileRef });
+                    conjunction = "and",
+                    conditions = new[]
+                    {
+                        new
+                        {
+                            field_name = "Request ID",
+                            @operator = "is",
+                            value = new[] { record.RecordID }
+                        }
+                    }
                 }
+            });
+
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(searchRecordsRequest);
+            var recordsResponseContent = recordsResponse.Data
+                ?? throw new PluginMisconfigurationException("No response content received from records search.");
+
+            Console.WriteLine($"Raw records response for record {record.RecordID}: {recordsResponseContent}");
+
+            var selectedRecord = recordsResponse.Data?.Items?.FirstOrDefault(r => r.RecordId == record.RecordID)
+                ?? throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
+
+            if (selectedRecord.Fields == null || !selectedRecord.Fields.TryGetValue(fieldSchema.FieldName, out var rawFieldValue) || rawFieldValue == null)
+                throw new PluginMisconfigurationException($"Attachment field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') not found or empty in record '{record.RecordID}'.");
+
+            var tokens = new List<string>();
+            if (rawFieldValue is JArray arr)
+            {
+                tokens = arr.ToObject<List<JObject>>()
+                    .Select(o => o.Value<string>("file_token"))
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
             }
+            else if (rawFieldValue is JObject obj)
+            {
+                var token = obj.Value<string>("file_token");
+                if (!string.IsNullOrEmpty(token))
+                    tokens.Add(token);
+            }
+
+            if (!tokens.Any())
+                throw new PluginMisconfigurationException(
+                    $"No valid file tokens found in attachment field '{fieldSchema.FieldName}' (ID: '{field.FieldId}') for record '{record.RecordID}'.");
+
+            var batchReq = new RestRequest("/drive/v1/medias/batch_get_tmp_download_url", Method.Get);
+            foreach (var token in tokens)
+                batchReq.AddParameter("file_tokens", token);
+
+            var batchResp = await larkClient.ExecuteWithErrorHandling<BatchUrlResponseDto>(batchReq);
+            if (batchResp.Data?.TmpDownloadUrls == null || !batchResp.Data.TmpDownloadUrls.Any())
+                throw new PluginMisconfigurationException($"Failed to retrieve download URLs for file tokens in field '{fieldSchema.FieldName}'.");
+
+            foreach (var item in batchResp.Data.TmpDownloadUrls)
+            {
+                var fileContent = await FileDownloader.DownloadFileBytes(item.TmpDownloadUrl);
+                var fileRef = await fileManagementClient.UploadAsync(
+                    fileContent.FileStream,
+                    fileContent.ContentType,
+                    fileContent.Name);
+                result.Files.Add(new FileResponse { File = fileRef });
+            }
+
             return result;
         }   
     }

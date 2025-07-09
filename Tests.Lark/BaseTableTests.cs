@@ -23,8 +23,10 @@ namespace Tests.Lark
         public async Task GetBaseRecord_IssSuccess()
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
-            var response = await action.GetRecord(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
-                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" }, new GetBaseRecord { RecordID = "recuQsfE1GO90j" });
+            var response = await action.GetRecord(
+                new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+                new GetBaseRecord { RecordID = "recuQdwBxvJip5" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);

@@ -53,7 +53,7 @@ namespace Apps.Lark.Actions
 
 
         [Action("Get base record", Description = "Gets record from base table")]
-        public async Task<RecordListResponse> GetRecord([ActionParameter] BaseRequest baseId, [ActionParameter] BaseTableRequest table,
+        public async Task<RecordResponse> GetRecord([ActionParameter] BaseRequest baseId, [ActionParameter] BaseTableRequest table,
             [ActionParameter] GetBaseRecord record)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
@@ -95,11 +95,12 @@ namespace Apps.Lark.Actions
 
             var selectedRecord = receivedRecords.First();
 
-            return new RecordListResponse
+            return new RecordResponse
             {
                 BaseId = baseId.AppId,
                 TableId = table.TableId,
-                Records = new List<BaseRecordDto> { selectedRecord },
+                RecordId = selectedRecord.RecordId,
+                Fields = selectedRecord.Fields,
             };
         }
 

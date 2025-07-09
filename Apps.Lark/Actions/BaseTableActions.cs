@@ -1,15 +1,21 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
+using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
+using Apps.Lark.Polling.Models;
+using Apps.Lark.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using System.Text;
 
 namespace Apps.Lark.Actions
 {
@@ -49,24 +55,62 @@ namespace Apps.Lark.Actions
 
 
         [Action("Get base record", Description = "Gets record from base table")]
-        public async Task<RecordResponse> GetRecord([ActionParameter] BaseRequest baseId, [ActionParameter] BaseTableRequest table,
+        public async Task<RecordListResponse> GetRecord([ActionParameter] BaseRequest baseId, [ActionParameter] BaseTableRequest table,
             [ActionParameter] GetBaseRecord record)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-            var request = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id", Method.Get);
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(item => item.FieldName, item => item);
 
-            var response = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(request);
-            var items = response.Data?.Items ?? new List<RecordItemDto>();
+            var schemaJson = JsonConvert.SerializeObject(schemaByFieldName.Values, Formatting.Indented);
 
-            var selected = items.FirstOrDefault(r => r.RecordId == record.RecordID);
+            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
+            searchRecordsRequest.AddQueryParameter("page_size", "1");
+            searchRecordsRequest.AddJsonBody(new
+            {
+                filter = new
+                {
+                    conjunction = "and",
+                    conditions = new[]
+                    {
+                        new
+                        {
+                            field_name = "Request ID",
+                            @operator = "is",
+                            value = new[] { record.RecordID }
+                        }
+                    }
+                }
+            });
 
-            if (selected is null)
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
+            var recordsResponseContent = recordsResponse.Content ?? throw new PluginMisconfigurationException("No response content received from records search.");
+
+            var receivedRecords = BaseRecordJsonParser
+                .ConvertToRecordsList(recordsResponseContent, schemaByFieldName)
+                .ToList();
+
+            if (!receivedRecords.Any())
                 throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
-            return new RecordResponse
+            var selectedRecord = receivedRecords.First();
+
+            var jsonString = JsonConvert.SerializeObject(selectedRecord, Formatting.Indented);
+            var jsonBytes = Encoding.UTF8.GetBytes(jsonString);
+            var jsonFile = await fileManagementClient.UploadAsync(
+                new MemoryStream(jsonBytes),
+                "application/json",
+                $"{selectedRecord.RecordId}.json"
+            );
+
+            return new RecordListResponse
             {
-                Values = selected
+                BaseId = baseId.AppId,
+                TableId = table.TableId,
+                Records = new List<BaseRecordDto> { selectedRecord },
+                RecordsJson = new List<FileReference> { jsonFile }
             };
         }
 

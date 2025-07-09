@@ -134,20 +134,6 @@ namespace Apps.Lark.Polling
                 })
                 .ToList();
 
-            var recordsJson = await Task.WhenAll(
-                receivedRecords.Select(async record =>
-                {
-                    var jsonString = JsonConvert.SerializeObject(record, Formatting.Indented);
-                    var jsonBytes = Encoding.UTF8.GetBytes(jsonString);
-
-                    return await fileManagementClient.UploadAsync(
-                        new MemoryStream(jsonBytes),
-                        "application/json",
-                        $"{record.RecordId}.json"
-                    );
-                })
-            );
-
             memory.LastPollingTime = pollingStartTime;
             return new PollingEventResponse<DateTimeMemory, RecordListResponse>
             {
@@ -158,7 +144,6 @@ namespace Apps.Lark.Polling
                     BaseId = baseId.AppId,
                     TableId = table.TableId,
                     Records = receivedRecords,
-                    RecordsJson = recordsJson,
                 }
             };
         }

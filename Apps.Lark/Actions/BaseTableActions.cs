@@ -8,15 +8,12 @@ using Apps.Lark.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
-using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Models;
-using Blackbird.Applications.Sdk.Utils.Utilities;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
-using System.Text;
 
 namespace Apps.Lark.Actions
 {
@@ -98,20 +95,11 @@ namespace Apps.Lark.Actions
 
             var selectedRecord = receivedRecords.First();
 
-            var jsonString = JsonConvert.SerializeObject(selectedRecord, Formatting.Indented);
-            var jsonBytes = Encoding.UTF8.GetBytes(jsonString);
-            var jsonFile = await fileManagementClient.UploadAsync(
-                new MemoryStream(jsonBytes),
-                "application/json",
-                $"{selectedRecord.RecordId}.json"
-            );
-
             return new RecordListResponse
             {
                 BaseId = baseId.AppId,
                 TableId = table.TableId,
                 Records = new List<BaseRecordDto> { selectedRecord },
-                RecordsJson = new List<FileReference> { jsonFile }
             };
         }
 

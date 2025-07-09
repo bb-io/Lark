@@ -128,6 +128,8 @@ To get the Application ID and Application Secret, follow these steps:
 To update field "Date", please use input property "New date value". To update field "Attachment", please use input property "Attachment".
 - **Get person entry from base table record** gets a person entry from a base table record
 - **Get date entries from base table record** gets date entries from a base table record
+- **Get text entry from base table record** gets a text entry from a base table record
+- **Get number entry from base table record** gets a number entry from a base table record
 - **Download attachments from base table record** downloads attachments from a base table record
 - **Insert row to base table** inserts a row to a base table
 

@@ -34,7 +34,7 @@ namespace Apps.Lark.Models.Response
         [Display("Name")]
         public string Name { get; set; }
 
-        [Display("User Mention")]
+        [Display("User mention")]
         public string UserMention => $"<at user_id=\"{Id}\">{Name}</at>";
     }
 }

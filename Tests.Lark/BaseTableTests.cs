@@ -133,7 +133,7 @@ namespace Tests.Lark
             var response = await action.DownloadAttachments(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
                 new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
-                new GetFieldRequest { FieldId= "fldTXqfdaW" });
+                new GetDownloadFieldRequest { FieldId= "fldTXqfdaW" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);

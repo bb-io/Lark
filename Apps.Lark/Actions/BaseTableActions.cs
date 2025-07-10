@@ -442,7 +442,7 @@ namespace Apps.Lark.Actions
             [ActionParameter] BaseRequest baseId,
             [ActionParameter] BaseTableRequest table,
             [ActionParameter] GetBaseRecord record,
-            [ActionParameter] GetFieldRequest field)
+            [ActionParameter] GetDownloadFieldRequest field)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
             var result = new DownloadAttachmentsResponse();

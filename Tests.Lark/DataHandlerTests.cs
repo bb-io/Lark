@@ -213,6 +213,23 @@ public class DataHandlerTests : TestBase
         Assert.IsTrue(result.Count() > 0);
     }
 
+    [TestMethod]
+    public async Task BaseTableAttachmentFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTableAttachmentFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
 }
 
 

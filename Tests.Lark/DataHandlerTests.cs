@@ -97,7 +97,7 @@ public class DataHandlerTests : TestBase
     public async Task BaseTableDataHandler_IsSuccess()
     {
 
-        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId= "MXjZb5uHvahFiMs5mUvjIzC9pxf" });
+        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId= "Oacjbnzg3aMyAXsLgK5jR21Op0b" });
 
         var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
 
@@ -114,8 +114,93 @@ public class DataHandlerTests : TestBase
     public async Task BaseTableFieldDataHandler_IsSuccess()
     {
 
-        var handler = new BaseTableFieldDataSourceHandler(InvocationContext, new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
-            new BaseTableRequest { TableId= "tblORLQK2OUtTZ9p" });
+        var handler = new BaseTableFieldDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId= "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTableTextFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTableTextFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTablePersonFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTablePersonFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTableDateFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTableDateFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTableMultipleFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTableMultipleFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
+    public async Task BaseTableNumberFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTableNumberFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
 
         var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
 

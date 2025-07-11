@@ -335,7 +335,7 @@ namespace Apps.Lark.Actions
 
             var fieldSchema = await BaseFiledSchemaParser.GetFieldSchema(larkClient, baseId.AppId, table.TableId, field.FieldId);
 
-            if (fieldSchema.FieldTypeId != 1 && fieldSchema.FieldTypeId != 3)
+            if (fieldSchema.FieldTypeId != 1 && fieldSchema.FieldTypeId != 3 && fieldSchema.FieldTypeId != 15)
                 throw new PluginMisconfigurationException(
                     $"Field '{fieldSchema.FieldName}' (Type: {fieldSchema.FieldTypeName}) is not a text field");
 
@@ -344,10 +344,22 @@ namespace Apps.Lark.Actions
             var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
                 ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
 
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
-                ?? throw new PluginMisconfigurationException($"Text field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
+            string textValue;
+            if (fieldSchema.FieldTypeId == 15)
+            {
+                var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}'].link")
+                    ?? throw new PluginMisconfigurationException($"Link field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
 
-            var textValue = fieldJToken.Value<string>() ?? string.Empty;
+                textValue = fieldJToken.Value<string>()
+                    ?? throw new PluginMisconfigurationException($"Failed to retrieve link value for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
+            }
+            else
+            {
+                var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
+                    ?? throw new PluginMisconfigurationException($"Text field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
+
+                textValue = fieldJToken.Value<string>() ?? string.Empty;
+            }
 
             return new TextFieldResponse
             {
@@ -431,41 +443,7 @@ namespace Apps.Lark.Actions
             {
                 NumberValue = numberValue
             };
-        }
-
-        [Action("Get link entry from base table record", Description = "Gets a link entry from a base table record")]
-        public async Task<LinkFieldResponse> GetLinkEntry(
-            [ActionParameter] BaseRequest baseId,
-            [ActionParameter] BaseTableRequest table,
-            [ActionParameter] GetBaseRecord record,
-            [ActionParameter] GetLinkFieldRequest field)
-        {
-            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-
-            var fieldSchema = await BaseFiledSchemaParser.GetFieldSchema(larkClient, baseId.AppId, table.TableId, field.FieldId);
-
-            if (fieldSchema.FieldTypeId != 15)
-                throw new PluginMisconfigurationException(
-                    $"Field '{fieldSchema.FieldName}' (Type: {fieldSchema.FieldTypeName}) is not a link field");
-
-            var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}", Method.Get);
-            var recordResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
-            var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
-                ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
-
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}'].link")
-                ?? throw new PluginMisconfigurationException($"Link field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
-
-            var linkValue = fieldJToken.Value<string>();
-            if (string.IsNullOrEmpty(linkValue))
-                throw new PluginMisconfigurationException(
-                    $"Failed to retrieve link value for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
-
-            return new LinkFieldResponse
-            {
-                LinkValue = linkValue
-            };
-        }
+        }      
 
 
         [Action("Download attachments from base table record", Description = "Downloads all attachments from a record")]

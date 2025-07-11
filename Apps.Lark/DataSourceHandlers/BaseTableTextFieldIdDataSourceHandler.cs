@@ -17,7 +17,7 @@ namespace Apps.Lark.DataSourceHandlers
             var larkClient = new LarkClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new RestRequest($"/bitable/v1/apps/{input.AppId}/tables/{table.TableId}/fields", Method.Get);
             var response = await larkClient.ExecuteWithErrorHandling<FieldsResponseDto>(request);
-            var fields = response.Data.Items.Where(field => field.Type == 1 || field.Type == 3);
+            var fields = response.Data.Items.Where(field => field.Type == 1 || field.Type == 3 || field.Type == 15);
 
             return fields.ToDictionary(field => field.FieldId, field => $"{field.FieldName} ({field.UiType})");
         }

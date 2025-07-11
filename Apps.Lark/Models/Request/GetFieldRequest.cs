@@ -51,11 +51,4 @@ namespace Apps.Lark.Models.Request
         [DataSource(typeof(BaseTableAttachmentFieldIdDataSourceHandler))]
         public string FieldId { get; set; }
     }
-
-    public class GetLinkFieldRequest
-    {
-        [Display("Field ID")]
-        [DataSource(typeof(BaseTableLinkFieldIdDataSourceHandler))]
-        public string FieldId { get; set; }
-    }
 }

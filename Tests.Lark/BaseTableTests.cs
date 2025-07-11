@@ -127,6 +127,20 @@ namespace Tests.Lark
         }
 
         [TestMethod]
+        public async Task GetBaseRecordLinkTypeEntry_IssSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetLinkEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+                new GetLinkFieldRequest { FieldId = "fldPVU5SOZ" });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
+
+        [TestMethod]
         public async Task GetBaseRecordFilesTypeEntry_IssSuccess()
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
@@ -152,6 +166,7 @@ namespace Tests.Lark
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
+
 
         //InsertBaseTableRow
 

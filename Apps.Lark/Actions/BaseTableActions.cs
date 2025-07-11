@@ -414,9 +414,6 @@ namespace Apps.Lark.Actions
                 throw new PluginMisconfigurationException(
                     $"Field '{fieldSchema.FieldName}' (Type: {fieldSchema.FieldTypeName}) is not a number field");
 
-            if (fieldSchema.FieldName.Contains("'"))
-                throw new PluginMisconfigurationException($"Fields with a single quote in name are not supported.");
-
             var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}", Method.Get);
             var recordResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
             var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
@@ -433,6 +430,40 @@ namespace Apps.Lark.Actions
             return new NumberFieldResponse
             {
                 NumberValue = numberValue
+            };
+        }
+
+        [Action("Get link entry from base table record", Description = "Gets a link entry from a base table record")]
+        public async Task<LinkFieldResponse> GetLinkEntry(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table,
+            [ActionParameter] GetBaseRecord record,
+            [ActionParameter] GetLinkFieldRequest field)
+        {
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var fieldSchema = await BaseFiledSchemaParser.GetFieldSchema(larkClient, baseId.AppId, table.TableId, field.FieldId);
+
+            if (fieldSchema.FieldTypeId != 15)
+                throw new PluginMisconfigurationException(
+                    $"Field '{fieldSchema.FieldName}' (Type: {fieldSchema.FieldTypeName}) is not a link field");
+
+            var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}", Method.Get);
+            var recordResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
+            var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
+                ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
+
+            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}'].link")
+                ?? throw new PluginMisconfigurationException($"Link field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
+
+            var linkValue = fieldJToken.Value<string>();
+            if (string.IsNullOrEmpty(linkValue))
+                throw new PluginMisconfigurationException(
+                    $"Failed to retrieve link value for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
+
+            return new LinkFieldResponse
+            {
+                LinkValue = linkValue
             };
         }
 

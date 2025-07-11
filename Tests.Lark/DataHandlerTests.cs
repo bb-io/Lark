@@ -197,6 +197,23 @@ public class DataHandlerTests : TestBase
     }
 
     [TestMethod]
+    public async Task BaseTableLinkFieldDataHandler_IsSuccess()
+    {
+        var handler = new BaseTableLinkFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsTrue(result.Count() > 0);
+    }
+
+    [TestMethod]
     public async Task BaseTableNumberFieldDataHandler_IsSuccess()
     {
         var handler = new BaseTableNumberFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },

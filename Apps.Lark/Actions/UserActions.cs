@@ -9,7 +9,7 @@ using RestSharp;
 
 namespace Apps.Lark.Actions
 {
-    [ActionList]
+    [ActionList("Users")]
     public class UserActions(InvocationContext invocationContext) : Invocable(invocationContext)
     {
         [Action("Get user information", Description = "Gets information about user by ID")]

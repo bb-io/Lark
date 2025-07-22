@@ -13,7 +13,7 @@ using RestSharp;
 
 namespace Apps.Lark.Actions
 {
-    [ActionList]
+    [ActionList("Spreadsheets")]
     public class SpreadsheetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
         private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;

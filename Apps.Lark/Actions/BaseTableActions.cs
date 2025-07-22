@@ -18,7 +18,7 @@ using RestSharp;
 
 namespace Apps.Lark.Actions
 {
-    [ActionList]
+    [ActionList("Bases")]
     public class BaseTableActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
 

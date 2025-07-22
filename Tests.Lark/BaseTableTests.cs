@@ -110,21 +110,6 @@ namespace Tests.Lark
                 new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
                 new GetBaseRecord { RecordID = "recuQdwBxvJip5" },
-                new GetMultipleFieldRequest { FieldId = "fldCJFVgiK" });
-
-            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
-            Console.WriteLine(json);
-            Assert.IsNotNull(response);
-        }
-
-        [TestMethod]
-        public async Task GetMultiOptionValueFromRecord_IsSuccess()
-        {
-            var action = new BaseTableActions(InvocationContext, FileManager);
-            var response = await action.GetMultiOptionValueFromRecord(
-                new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
-                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
-                new GetBaseRecord { RecordID = "recuQdwBxvJip5" },
                 new GetFieldRequest { FieldId = "fldCJFVgiK" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);

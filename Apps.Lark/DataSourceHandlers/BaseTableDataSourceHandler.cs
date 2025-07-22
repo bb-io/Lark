@@ -10,7 +10,7 @@ using RestSharp;
 
 namespace Apps.Lark.DataSourceHandlers
 {
-    public class BaseTableDataSourceHandler(InvocationContext invocationContext, [ActionParameter] [PollingEventParameter] BaseRequest input) : Invocable(invocationContext), IAsyncDataSourceItemHandler
+    public class BaseTableDataSourceHandler(InvocationContext invocationContext, BaseRequest input) : Invocable(invocationContext), IAsyncDataSourceItemHandler
     {
         public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
         {

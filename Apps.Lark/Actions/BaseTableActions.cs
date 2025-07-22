@@ -54,54 +54,31 @@ namespace Apps.Lark.Actions
 
 
         [Action("Get base record", Description = "Gets record from base table")]
-        public async Task<RecordResponse> GetRecord([ActionParameter] BaseRequest baseId, [ActionParameter] BaseTableRequest table,
+        public async Task<RecordResponse> GetRecord(
+            [ActionParameter] BaseRequest baseId,
+            [ActionParameter] BaseTableRequest table,
             [ActionParameter] GetBaseRecord record)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}", Method.Get);
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
+            var recordsResponseContent = recordsResponse.Content
+                ?? throw new PluginMisconfigurationException("Empty content received for the record.");
 
             var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
             var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
             var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(item => item.FieldName, item => item);
 
-            var schemaJson = JsonConvert.SerializeObject(schemaByFieldName.Values, Formatting.Indented);
-
-            var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
-            searchRecordsRequest.AddQueryParameter("page_size", "100");
-            searchRecordsRequest.AddJsonBody(new
-            {
-                filter = new
-                {
-                    conjunction = "and",
-                    conditions = new[]
-                    {
-                        new
-                        {
-                            field_name = "Request ID",
-                            @operator = "is",
-                            value = new[] { record.RecordID }
-                        }
-                    }
-                }
-            });
-
-            var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
-            var recordsResponseContent = recordsResponse.Content ?? throw new PluginMisconfigurationException("No response content received from records search.");
-
-            var receivedRecords = BaseRecordJsonParser
-                .ConvertToRecordsList(recordsResponseContent, schemaByFieldName)
-                .ToList();
-
-            if (!receivedRecords.Any())
-                throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
-
-            var selectedRecord = receivedRecords.First();
+            var receivedRecord = BaseRecordJsonParser.ConvertToRecord(recordsResponseContent, schemaByFieldName)
+                ?? throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
 
             return new RecordResponse
             {
                 BaseId = baseId.AppId,
                 TableId = table.TableId,
-                RecordId = selectedRecord.RecordId,
-                Fields = selectedRecord.Fields,
+                RecordId = receivedRecord.RecordId,
+                Fields = receivedRecord.Fields,
             };
         }
 

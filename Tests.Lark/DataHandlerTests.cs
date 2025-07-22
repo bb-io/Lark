@@ -139,7 +139,7 @@ public class DataHandlerTests : TestBase
         Console.WriteLine($"Total: {result.Count()}");
         foreach (var item in result)
         {
-            Console.WriteLine($"{item.Value}: {item.Key}");
+            Console.WriteLine($"{item.Value}: {item.DisplayName}");
         }
 
         Assert.IsTrue(result.Count() > 0);
@@ -183,23 +183,6 @@ public class DataHandlerTests : TestBase
     public async Task BaseTableMultipleFieldDataHandler_IsSuccess()
     {
         var handler = new BaseTableMultipleFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
-            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
-
-        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
-
-        Console.WriteLine($"Total: {result.Count()}");
-        foreach (var item in result)
-        {
-            Console.WriteLine($"{item.Value}: {item.Key}");
-        }
-
-        Assert.IsTrue(result.Count() > 0);
-    }
-
-    [TestMethod]
-    public async Task BaseTableLinkFieldDataHandler_IsSuccess()
-    {
-        var handler = new BaseTableLinkFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
             new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
 
         var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);

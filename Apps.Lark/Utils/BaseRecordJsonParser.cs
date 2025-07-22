@@ -81,7 +81,6 @@ public static class BaseRecordJsonParser
             BaseFieldTypes.ModifiedBy => StringFromArray(", ", field as JArray, "name"),
             BaseFieldTypes.Attachment => StringFromArray(", ", field as JArray, "name"),
             BaseFieldTypes.Lookup => StringFromArray(", ", field["value"] as JArray),
-            BaseFieldTypes.Formula => StringFromArray(", ", field["value"] as JArray, "text"),
             BaseFieldTypes.GroupChat => StringFromArray(", ", field as JArray, "name"),
 
             BaseFieldTypes.Date => StringFromTimestamp(field),
@@ -100,6 +99,8 @@ public static class BaseRecordJsonParser
             BaseFieldTypes.Link => field?["link"]?.Value<string>() ?? string.Empty,
 
             BaseFieldTypes.Location => field?["full_address"]?.Value<string>() ?? string.Empty,
+
+            BaseFieldTypes.Formula => StringFromFormula(field),
 
             _ => string.Empty
         };
@@ -166,5 +167,34 @@ public static class BaseRecordJsonParser
             }
         }
         return string.Join(", ", recordIds);
+    }
+
+    private static string StringFromFormula(JToken field)
+    {
+        // Lark returns list fields as is,
+        // but converts other types to lists with a single item
+        var listFieldTypes = new List<int>
+        {
+            BaseFieldTypes.Multiline,
+            BaseFieldTypes.MultipleOptions,
+            BaseFieldTypes.Person,
+            BaseFieldTypes.CreatedBy,
+            BaseFieldTypes.ModifiedBy,
+            BaseFieldTypes.Attachment,
+            BaseFieldTypes.GroupChat,
+        };
+
+        var formulaResultFieldType = field["type"]?.Value<int>() ?? -1;
+
+        var formulaResultFieldValue = listFieldTypes.Contains(formulaResultFieldType)
+            ? field["value"]
+            : field["value"]?[0];
+
+        if (formulaResultFieldValue == null || formulaResultFieldType == -1)
+        {
+            return string.Empty;
+        }
+
+        return ConvertFieldToString(formulaResultFieldValue, formulaResultFieldType);
     }
 }

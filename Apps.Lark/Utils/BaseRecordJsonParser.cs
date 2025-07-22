@@ -5,6 +5,21 @@ using Newtonsoft.Json.Linq;
 namespace Apps.Lark.Utils;
 public static class BaseRecordJsonParser
 {
+    public static BaseRecordDto? ConvertToRecord(string json, IDictionary<string, BaseTableSchemaApiItemDto> schemaByFieldName)
+    {
+        var jObj = JObject.Parse(json);
+        var recordToken = jObj["data"]?["record"];
+
+        if (recordToken == null || recordToken.Type != JTokenType.Object)
+            return null;
+
+        var rawRecord = (JObject)recordToken;
+        if (rawRecord == null)
+            return null;
+
+        return ConvertToBaseRecord(rawRecord, schemaByFieldName);
+    }
+
     public static IEnumerable<BaseRecordDto> ConvertToRecordsList(string json, IDictionary<string, BaseTableSchemaApiItemDto> schemaByFieldName)
     {
         var jObj = JObject.Parse(json);
@@ -74,14 +89,15 @@ public static class BaseRecordJsonParser
     {
         return fieldType switch
         {
-            BaseFieldTypes.Multiline => StringFromArray(string.Empty, field as JArray, "text"),
+            BaseFieldTypes.Multiline => field.Type == JTokenType.String
+                ? field.Value<string>() ?? string.Empty
+                : StringFromArray(string.Empty, field as JArray, "text"),
             BaseFieldTypes.MultipleOptions => StringFromArray(", ", field as JArray),
             BaseFieldTypes.Person => StringFromArray(", ", field as JArray, "name"),
             BaseFieldTypes.CreatedBy => StringFromArray(", ", field as JArray, "name"),
             BaseFieldTypes.ModifiedBy => StringFromArray(", ", field as JArray, "name"),
             BaseFieldTypes.Attachment => StringFromArray(", ", field as JArray, "name"),
             BaseFieldTypes.Lookup => StringFromArray(", ", field["value"] as JArray),
-            BaseFieldTypes.Formula => StringFromArray(", ", field["value"] as JArray, "text"),
             BaseFieldTypes.GroupChat => StringFromArray(", ", field as JArray, "name"),
 
             BaseFieldTypes.Date => StringFromTimestamp(field),
@@ -100,6 +116,8 @@ public static class BaseRecordJsonParser
             BaseFieldTypes.Link => field?["link"]?.Value<string>() ?? string.Empty,
 
             BaseFieldTypes.Location => field?["full_address"]?.Value<string>() ?? string.Empty,
+
+            BaseFieldTypes.Formula => StringFromFormula(field),
 
             _ => string.Empty
         };
@@ -166,5 +184,44 @@ public static class BaseRecordJsonParser
             }
         }
         return string.Join(", ", recordIds);
+    }
+
+    private static string StringFromFormula(JToken field)
+    {
+        if (field.Type == JTokenType.Array)
+        {
+            return StringFromArray(string.Empty, field as JArray, "text");
+        }
+
+        if (field.Type != JTokenType.Object)
+        {
+            return field.Value<string>() ?? string.Empty;
+        }
+
+        // Lark returns list fields as is,
+        // but converts other types to lists with a single item
+        var listFieldTypes = new List<int>
+        {
+            BaseFieldTypes.Multiline,
+            BaseFieldTypes.MultipleOptions,
+            BaseFieldTypes.Person,
+            BaseFieldTypes.CreatedBy,
+            BaseFieldTypes.ModifiedBy,
+            BaseFieldTypes.Attachment,
+            BaseFieldTypes.GroupChat,
+        };
+
+        var formulaResultFieldType = field["type"]?.Value<int>() ?? -1;
+
+        var formulaResultFieldValue = listFieldTypes.Contains(formulaResultFieldType)
+            ? field["value"]
+            : field["value"]?[0];
+
+        if (formulaResultFieldValue == null || formulaResultFieldType == -1)
+        {
+            return string.Empty;
+        }
+
+        return ConvertFieldToString(formulaResultFieldValue, formulaResultFieldType);
     }
 }

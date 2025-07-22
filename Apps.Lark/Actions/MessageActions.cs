@@ -7,14 +7,12 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using RestSharp;
-using System;
 using System.Text.RegularExpressions;
 
 namespace Apps.Appname.Actions;
 
-[ActionList]
+[ActionList("Messages")]
 public class MessageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
 {
     private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;

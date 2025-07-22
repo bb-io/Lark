@@ -61,7 +61,7 @@ namespace Tests.Lark
             var response = await action.GetPersonEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
                 new GetBaseRecord { RecordID = "recmCOhl6k" },
-                new GetFieldRequest { FieldId= "fldCC7FWxL" });
+                new GetPersonFieldRequest { FieldId= "fldCC7FWxL" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -75,7 +75,7 @@ namespace Tests.Lark
             var response = await action.GetDateEntries(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
                 new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
-                new GetFieldRequest { FieldId= "fldlXq5XGQ" });
+                new GetDateFieldRequest { FieldId= "fldlXq5XGQ" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -87,10 +87,30 @@ namespace Tests.Lark
         public async Task GetBaseRecordTextTypeEntry_IssSuccess()
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
+            //var response = await action.GetTextEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+            //    new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+            //    new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+            //    new GetTextFieldRequest { FieldId= "fldKO35rlm" });
+
             var response = await action.GetTextEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+               new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
+               new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
+               new GetTextFieldRequest { FieldId = "fldPVU5SOZ" });
+
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
+            Console.WriteLine(json);
+            Assert.IsNotNull(response);
+        }
+
+        [TestMethod]
+        public async Task GetMultiOptionValueFromRecord_IsSuccess()
+        {
+            var action = new BaseTableActions(InvocationContext, FileManager);
+            var response = await action.GetMultiOptionValueFromRecord(
+                new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
-                new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
-                new GetFieldRequest { FieldId= "fldKO35rlm" });
+                new GetBaseRecord { RecordID = "recuQdwBxvJip5" },
+                new GetMultipleFieldRequest { FieldId = "fldCJFVgiK" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -119,13 +139,13 @@ namespace Tests.Lark
             var response = await action.GetNumberEntry(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
                 new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
-                new GetFieldRequest { FieldId = "fldVfDuLV4" });
+                new GetNumberFieldRequest { FieldId = "fldVfDuLV4" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
-
+      
         [TestMethod]
         public async Task GetBaseRecordFilesTypeEntry_IssSuccess()
         {
@@ -133,7 +153,7 @@ namespace Tests.Lark
             var response = await action.DownloadAttachments(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
                 new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" },
                 new GetBaseRecord { RecordID = "recuQsfE1GO90j" },
-                new GetFieldRequest { FieldId= "fldTXqfdaW" });
+                new GetDownloadFieldRequest { FieldId= "fldTXqfdaW" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -145,13 +165,14 @@ namespace Tests.Lark
         public async Task GetBaseTableUsedRange_IssSuccess()
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
-            var response = await action.GetBaseRecords(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
-                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" });
+            var response = await action.GetBaseRecords(new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
+                new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
+
 
         //InsertBaseTableRow
 

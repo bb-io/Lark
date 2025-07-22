@@ -97,7 +97,7 @@ public class DataHandlerTests : TestBase
     public async Task BaseTableDataHandler_IsSuccess()
     {
 
-        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId= "Oacjbnzg3aMyAXsLgK5jR21Op0b" });
+        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" });
 
         var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
 

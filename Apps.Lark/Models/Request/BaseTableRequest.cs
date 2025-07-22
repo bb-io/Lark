@@ -8,6 +8,6 @@ namespace Apps.Lark.Models.Request
     {
         [Display("Table ID")]
         [DataSource(typeof(BaseTableDataSourceHandler))]
-        public string TableId { get; set; }
+        public string TableId { get; set; } = string.Empty;
     }
 }

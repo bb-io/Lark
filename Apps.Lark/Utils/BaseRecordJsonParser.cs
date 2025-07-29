@@ -53,21 +53,19 @@ public static class BaseRecordJsonParser
             return null;
 
         var fieldsPayload = record["fields"] as JObject;
-        if (fieldsPayload == null)
-            return null;
 
         var fields = new List<BaseRecordFieldListItemDto>();
 
-        foreach (var prop in fieldsPayload.Properties())
+        foreach (var schema in schemaByFieldName.Values)
         {
-            if (!schemaByFieldName.TryGetValue(prop.Name, out var schema))
-                continue; // skip unknown fields
+            string? value = null;
 
-            var fieldToken = prop.Value;
-            if (fieldToken == null)
-                continue;
-
-            string value = ConvertFieldToString(fieldToken, schema.FieldTypeId);
+            if (fieldsPayload != null
+                && fieldsPayload.TryGetValue(schema.FieldName, out var token)
+                && token != null)
+            {
+                value = ConvertFieldToString(token, schema.FieldTypeId);
+            }
 
             fields.Add(new BaseRecordFieldListItemDto
             {
@@ -87,6 +85,9 @@ public static class BaseRecordJsonParser
 
     public static string ConvertFieldToString(JToken field, int fieldType)
     {
+        if (field == null || field.Type == JTokenType.Null)
+            return string.Empty;
+
         return fieldType switch
         {
             BaseFieldTypes.Multiline => field.Type == JTokenType.String
@@ -151,7 +152,14 @@ public static class BaseRecordJsonParser
 
     private static string StringFromTimestamp(JToken token)
     {
-        var offset = DateTimeOffset.FromUnixTimeMilliseconds(token.Value<long>());
+        if (token == null || token.Type == JTokenType.Null || (token.Type != JTokenType.Integer && token.Type != JTokenType.Float))
+            return string.Empty;
+
+        var value = token.Value<long?>();
+        if (!value.HasValue)
+            return string.Empty;
+
+        var offset = DateTimeOffset.FromUnixTimeMilliseconds(value.Value);
         return offset.UtcDateTime.ToString("o");
     }
 

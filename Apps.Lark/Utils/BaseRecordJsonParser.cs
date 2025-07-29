@@ -53,21 +53,19 @@ public static class BaseRecordJsonParser
             return null;
 
         var fieldsPayload = record["fields"] as JObject;
-        if (fieldsPayload == null)
-            return null;
 
         var fields = new List<BaseRecordFieldListItemDto>();
 
-        foreach (var prop in fieldsPayload.Properties())
+        foreach (var schema in schemaByFieldName.Values)
         {
-            if (!schemaByFieldName.TryGetValue(prop.Name, out var schema))
-                continue; // skip unknown fields
+            string? value = null;
 
-            var fieldToken = prop.Value;
-            if (fieldToken == null)
-                continue;
-
-            string value = ConvertFieldToString(fieldToken, schema.FieldTypeId);
+            if (fieldsPayload != null
+                && fieldsPayload.TryGetValue(schema.FieldName, out var token)
+                && token != null)
+            {
+                value = ConvertFieldToString(token, schema.FieldTypeId);
+            }
 
             fields.Add(new BaseRecordFieldListItemDto
             {

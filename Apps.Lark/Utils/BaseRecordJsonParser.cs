@@ -85,6 +85,9 @@ public static class BaseRecordJsonParser
 
     public static string ConvertFieldToString(JToken field, int fieldType)
     {
+        if (field == null || field.Type == JTokenType.Null)
+            return string.Empty;
+
         return fieldType switch
         {
             BaseFieldTypes.Multiline => field.Type == JTokenType.String
@@ -149,7 +152,14 @@ public static class BaseRecordJsonParser
 
     private static string StringFromTimestamp(JToken token)
     {
-        var offset = DateTimeOffset.FromUnixTimeMilliseconds(token.Value<long>());
+        if (token == null || token.Type == JTokenType.Null || (token.Type != JTokenType.Integer && token.Type != JTokenType.Float))
+            return string.Empty;
+
+        var value = token.Value<long?>();
+        if (!value.HasValue)
+            return string.Empty;
+
+        var offset = DateTimeOffset.FromUnixTimeMilliseconds(value.Value);
         return offset.UtcDateTime.ToString("o");
     }
 

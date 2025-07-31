@@ -151,8 +151,8 @@ namespace Apps.Lark.Polling
             };
         }
 
-        [PollingEvent("On base table row changed", "Triggered when field value in existing base table record is changed")]
-        public async Task<PollingEventResponse<BaseTableRecordChangedMemory, RecordResponse>> OnBaseTableRecordChanged(
+        [PollingEvent("On base table row updated", "Triggered when an existing base table record or it's field is modified.")]
+        public async Task<PollingEventResponse<BaseTableRecordChangedMemory, RecordResponse>> OnBaseTableRecordUpdated(
             PollingEventRequest<BaseTableRecordChangedMemory> request,
             [PollingEventParameter] BaseRequest baseId,
             [PollingEventParameter] BaseTableRequest table,

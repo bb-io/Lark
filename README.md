@@ -152,8 +152,8 @@ To update field "Date", please use input property "New date value". To update fi
 - **On user added to group** triggers when a user is added to a group
 - **On file edited** triggers when a file is edited in a Lark channel or directly to a user
 - **On new rows added** triggers when new rows are added to a spreadsheet
-- **On base table new rows added** triggers when new rows are added to a base table. To use this event you need to configure adding to your table the field "Date created"(Type: 1001)
-
+- **On base table new rows added** triggers when new rows are added to a base table. To use this event, you need to add a field of type "Date created" to your table.
+- **On base table row updated** triggers when a base table row, or optionally a specific field, is updated. To use this event, you need to add a field of type "Date modified" to your table.
 
 ## Feedback
 

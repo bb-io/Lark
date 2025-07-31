@@ -53,7 +53,7 @@ namespace Tests.Lark
         }
 
         [TestMethod]
-        public async Task OnBaseTableRecordChanged_works()
+        public async Task OnBaseTableRecordUpdated_works()
         {
             var baseRequest = new BaseRequest { AppId = "BqWJbD6KnaJpaMsj1JZjwekIpqx" };
             var baseTableRequest = new BaseTableRequest { TableId = "tblY6LBTDbElZ0l4" };
@@ -67,7 +67,7 @@ namespace Tests.Lark
             };
 
             var actions = new PollingList(InvocationContext, FileManager);
-            var result = await actions.OnBaseTableRecordChanged(
+            var result = await actions.OnBaseTableRecordUpdated(
                 new() { Memory = memory },
                 baseRequest,
                 baseTableRequest,

@@ -165,22 +165,8 @@ namespace Apps.Lark.Polling
                 throw new PluginMisconfigurationException("Both 'Field ID' and 'Field expected value' must be either provided or both must be empty.");
             }
 
-            // first polling, init memory and return early
-            if (request.Memory == null)
-            {
-                return new PollingEventResponse<BaseTableRecordChangedMemory, RecordResponse>
-                {
-                    FlyBird = false,
-                    Result = null,
-                    Memory = new BaseTableRecordChangedMemory {
-                        LastPollingTime = DateTime.UtcNow,
-                        LastObservedFieldValue = string.Empty,
-                    },
-                };
-            }
-
-            // main logic
-            var memory = request.Memory;
+            var isFirstRun = request.Memory == null;
+            var memory = request.Memory ?? new BaseTableRecordChangedMemory();
             var lastPollingDay = memory.LastPollingTime.Date;
             var pollingStartTime = DateTime.UtcNow;
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
@@ -224,7 +210,7 @@ namespace Apps.Lark.Polling
                 }
             }
 
-            var flyBird = isModifiedSinceLastPolling && hasExpectedFieldChanged;
+            var flyBird = !isFirstRun && isModifiedSinceLastPolling && hasExpectedFieldChanged;
             memory.LastPollingTime = pollingStartTime;
             return new PollingEventResponse<BaseTableRecordChangedMemory, RecordResponse>
             {

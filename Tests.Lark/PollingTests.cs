@@ -51,5 +51,32 @@ namespace Tests.Lark
             Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
             Assert.IsNotNull(result);
         }
+
+        [TestMethod]
+        public async Task OnBaseTableRecordChanged_works()
+        {
+            var baseRequest = new BaseRequest { AppId = "BqWJbD6KnaJpaMsj1JZjwekIpqx" };
+            var baseTableRequest = new BaseTableRequest { TableId = "tblY6LBTDbElZ0l4" };
+            var recordId = "recoXweOWG";
+            var fieldId = "fldJje4MEe";
+            var fieldValue = "O2: Optimize product features";
+            var memory = new BaseTableRecordChangedMemory
+            {
+                LastPollingTime = DateTime.UtcNow.AddDays(-20),
+                LastObservedFieldValue = string.Empty, // "O2: Optimize product features"
+            };
+
+            var actions = new PollingList(InvocationContext, FileManager);
+            var result = await actions.OnBaseTableRecordChanged(
+                new() { Memory = memory },
+                baseRequest,
+                baseTableRequest,
+                recordId,
+                fieldId,
+                fieldValue);
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented));
+            Assert.IsNotNull(result);
+        }
     }
 }

@@ -1,18 +1,19 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
 using Apps.Lark.Constants;
+using Apps.Lark.DataSourceHandlers;
 using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Apps.Lark.Polling.Models;
 using Apps.Lark.Utils;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Newtonsoft.Json;
 using RestSharp;
-using System.Text;
 
 namespace Apps.Lark.Polling
 {
@@ -20,7 +21,8 @@ namespace Apps.Lark.Polling
     public class PollingList(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
         [PollingEvent("On new rows added", "Triggered when new rows are added to the sheet")]
-        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(PollingEventRequest<NewRowAddedMemory> request,
+        public async Task<PollingEventResponse<NewRowAddedMemory, NewRowResult>> OnNewRowsAdded(
+            PollingEventRequest<NewRowAddedMemory> request,
             [PollingEventParameter] SpreadsheetsRequest spreadsheet)
         {
             var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
@@ -92,7 +94,8 @@ namespace Apps.Lark.Polling
 
 
         [PollingEvent("On base table new rows added", "Triggered when new rows are added to base table")]
-        public async Task<PollingEventResponse<DateTimeMemory, RecordListResponse>> OnNewRowsAddedToBaseTable(PollingEventRequest<DateTimeMemory> request,
+        public async Task<PollingEventResponse<DateTimeMemory, RecordListResponse>> OnNewRowsAddedToBaseTable(
+            PollingEventRequest<DateTimeMemory> request,
             [PollingEventParameter] BaseRequest baseId,
             [PollingEventParameter] BaseTableRequest table)
         {
@@ -121,7 +124,7 @@ namespace Apps.Lark.Polling
 
             var searchRecordsRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/search", Method.Post);
             searchRecordsRequest.AddQueryParameter("page_size", "100");
-            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAtFieldSchema.FieldName));            
+            searchRecordsRequest.AddJsonBody(GenerateBaseRecordsSearchFilter(lastPollingDay, createdAtFieldSchema.FieldName));
             var recordsResponse = await larkClient.ExecuteWithErrorHandling(searchRecordsRequest);
 
             var receivedRecords = BaseRecordJsonParser
@@ -148,6 +151,82 @@ namespace Apps.Lark.Polling
             };
         }
 
+        [PollingEvent("On base table row updated", "Triggered when an existing base table record or it's field is modified.")]
+        public async Task<PollingEventResponse<BaseTableRecordChangedMemory, RecordResponse>> OnBaseTableRecordUpdated(
+            PollingEventRequest<BaseTableRecordChangedMemory> request,
+            [PollingEventParameter] BaseRequest baseId,
+            [PollingEventParameter] BaseTableRequest table,
+            [PollingEventParameter, Display("Record ID")] string recordId,
+            [PollingEventParameter, Display("Field ID"), DataSource(typeof(BaseTableNonDateFieldIdDataSourceHandler))] string? fieldId,
+            [PollingEventParameter, Display("Field expected value")] string? fieldExpectedValue)
+        {
+            if (string.IsNullOrEmpty(fieldId) != string.IsNullOrEmpty(fieldExpectedValue))
+            {
+                throw new PluginMisconfigurationException("Both 'Field ID' and 'Field expected value' must be either provided or both must be empty.");
+            }
+
+            var isFirstRun = request.Memory == null;
+            var memory = request.Memory ?? new BaseTableRecordChangedMemory();
+            var lastPollingDay = memory.LastPollingTime.Date;
+            var pollingStartTime = DateTime.UtcNow;
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+            var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{recordId}", Method.Get);
+            var recordsResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
+            var recordsResponseContent = recordsResponse.Content
+                ?? throw new PluginMisconfigurationException("Empty content received for the record.");
+
+            var tableSchemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/fields", Method.Get);
+            var tableSchemaResponse = await larkClient.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(tableSchemaRequest);
+            var schemaByFieldName = tableSchemaResponse.Data.Items.ToDictionary(item => item.FieldName, item => item);
+
+            var receivedRecord = BaseRecordJsonParser.ConvertToRecord(recordsResponseContent, schemaByFieldName)
+                ?? throw new PluginMisconfigurationException($"Record with ID '{recordId}' not found in table {table.TableId}.");
+            
+            var lastModifiedFieldSchema = tableSchemaResponse.Data.Items
+                .FirstOrDefault(s => s.FieldTypeId == BaseFieldTypes.LastModifiedDate)
+                ?? throw new PluginMisconfigurationException("Selected table doesn't have a field with 'Last modified date' type. Add a field with 'Last modified date' type to the table via Lark user interface.");
+
+            var lastModifiedTimeString = receivedRecord.Fields?
+                .FirstOrDefault(f => f.FieldId == lastModifiedFieldSchema.FieldId)?
+                .FieldValue;
+
+            var lastModifiedTime = DateTime.Parse(lastModifiedTimeString ?? "").ToUniversalTime();
+
+            var isModifiedSinceLastPolling = lastModifiedTime > memory.LastPollingTime;
+            var hasExpectedFieldChanged = true; // we only check this if fieldId and fieldExpectedValue are provided
+
+            if (isModifiedSinceLastPolling && !string.IsNullOrEmpty(fieldId) && !string.IsNullOrEmpty(fieldExpectedValue))
+            {
+                hasExpectedFieldChanged = false;
+
+                var expectedField = receivedRecord.Fields?.FirstOrDefault(f => f.FieldId == fieldId);
+                if (expectedField != null)
+                {
+                    hasExpectedFieldChanged = expectedField.FieldValue == fieldExpectedValue
+                        && memory.LastObservedFieldValue != expectedField.FieldValue;
+
+                    memory.LastObservedFieldValue = expectedField.FieldValue;
+                }
+            }
+
+            var flyBird = !isFirstRun && isModifiedSinceLastPolling && hasExpectedFieldChanged;
+            memory.LastPollingTime = pollingStartTime;
+            return new PollingEventResponse<BaseTableRecordChangedMemory, RecordResponse>
+            {
+                FlyBird = flyBird,
+                Memory = memory,
+                Result = flyBird == false
+                    ? null
+                    : new RecordResponse
+                        {
+                            BaseId = baseId.AppId,
+                            TableId = table.TableId,
+                            RecordId = receivedRecord.RecordId,
+                            Fields = receivedRecord.Fields ?? [],
+                        }
+            };
+        }
 
         private static string ExtractColumnRange(string fullRange)
         {

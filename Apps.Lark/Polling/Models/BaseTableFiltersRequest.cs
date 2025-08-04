@@ -6,7 +6,7 @@ namespace Apps.Lark.Polling.Models
     public class BaseTableFiltersRequest
     {
         [DataSource(typeof(BaseTableDataSourceHandler))]
-        public string Basetable { get; set; }
+        public string? Basetable { get; set; }
 
         public string? Status { get; set; }
 

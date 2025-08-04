@@ -1,4 +1,6 @@
 ﻿using Apps.Appname;
+using Apps.Lark.Models.Response;
+using Apps.Lark.Polling.Models;
 using Apps.Lark.Webhooks.Handlers;
 using Apps.Lark.Webhooks.Payload;
 using Blackbird.Applications.Sdk.Common.Invocation;
@@ -80,6 +82,47 @@ namespace Apps.Lark.Webhooks
                 Result = payload.Event,
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };
+        }
+
+
+
+        [Webhook("On base table record updated", typeof(BaseAppRecordChangedHandler), Description = "This event is triggered when the base table record updates")]
+        public async Task<WebhookResponse<BaseAppRecordChanged>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseTableFiltersRequest filter)
+        {
+            var payload = JsonConvert.DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString());
+
+            if (payload == null)
+                throw new Exception("No serializable payload was found in incoming request.");
+
+            bool isValid = true;
+
+            if (!string.IsNullOrEmpty(filter.RecordId))
+            {
+                isValid = payload.Event.ActionList.Any(action => action.RecordId == filter.RecordId);
+            }
+
+            if (!string.IsNullOrEmpty(filter.Status))
+            {
+                isValid = isValid && payload.Event.ActionList.Any(action => action.Action == filter.Status);
+            }
+
+            if (!isValid)
+            {
+                return new WebhookResponse<BaseAppRecordChanged>
+                {
+                    HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
+                    Result = null,
+                    ReceivedWebhookRequestType = WebhookRequestType.Default
+                };
+            }
+
+            return new WebhookResponse<BaseAppRecordChanged>
+            {
+                HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
+                Result = payload.Event,
+                ReceivedWebhookRequestType = WebhookRequestType.Default
+            };
+
         }
     }
 }

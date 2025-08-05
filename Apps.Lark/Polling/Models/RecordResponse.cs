@@ -18,4 +18,7 @@ public class RecordResponse
     [Display("Fields")]
     [JsonProperty("Fields")] // This is used to match the display name in the UI
     public List<BaseRecordFieldListItemDto> Fields { get; set; } = [];
+
+    [Display("Update time")]
+    public DateTime UpdateTime { get; set; }
 }

@@ -225,11 +225,21 @@ namespace Apps.Lark.Actions
 
             var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}?user_id_type=user_id", Method.Get);
             var recordResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
+
             var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
                 ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
 
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
-                ?? throw new PluginMisconfigurationException($"Person field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
+            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
+
+            if (fieldJToken == null)
+                return new PersonFieldResponse
+                {
+                    Person = new PersonData
+                    {
+                        Id = "",
+                        Name = ""
+                    }
+                };
 
             var users = new List<JObject>();
             if (fieldJToken.Type == JTokenType.Array)
@@ -242,17 +252,19 @@ namespace Apps.Lark.Actions
             }
 
             if (!users.Any())
-                throw new PluginMisconfigurationException(
-                    $"No valid user data found in person field '{fieldSchema.FieldName}' for record '{record.RecordID}'.");
+                return new PersonFieldResponse
+                {
+                    Person = new PersonData
+                    {
+                        Id = "",
+                        Name = ""
+                    }
+                };
 
             var user = users.First();
             var userId = user["id"]?.ToString();
             var userName = user["name"]?.ToString();
 
-            if (string.IsNullOrEmpty(userId))
-            {
-                userId = userName;
-            }
 
             return new PersonFieldResponse
             {
@@ -284,13 +296,20 @@ namespace Apps.Lark.Actions
             var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
                 ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
 
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
-                ?? throw new PluginMisconfigurationException($"Date field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
+            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
+
+            if (fieldJToken == null)
+                return new DateFieldResponse
+                {
+                    DateValue = null
+                };
 
             var dateString = fieldJToken.Value<string>();
             if (!long.TryParse(dateString, out var unixTimestampMs))
-                throw new PluginMisconfigurationException(
-                    $"Failed to parse '{dateString}' for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
+                return new DateFieldResponse
+                {
+                    DateValue = null
+                };
 
             var dateValue = DateTimeOffset.FromUnixTimeMilliseconds(unixTimestampMs).UtcDateTime;
 
@@ -407,13 +426,20 @@ namespace Apps.Lark.Actions
             var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
                 ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
 
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
-                ?? throw new PluginMisconfigurationException($"Number field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
+            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
+
+            if (fieldJToken == null)
+                return new NumberFieldResponse
+                {
+                    NumberValue = null
+                };
 
             var numberString = fieldJToken.Value<string>();
             if (!double.TryParse(numberString, out var numberValue))
-                throw new PluginMisconfigurationException(
-                    $"Failed to parse number value '{numberString}' for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
+                return new NumberFieldResponse
+                {
+                    NumberValue = null
+                };
 
             return new NumberFieldResponse
             {
@@ -446,8 +472,10 @@ namespace Apps.Lark.Actions
             var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
                 ?? throw new PluginMisconfigurationException("No response content received from record retrieval.");
 
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
-                ?? throw new PluginMisconfigurationException($"Attachment field '{fieldSchema.FieldName}'  not found or empty in record '{record.RecordID}'.");
+            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
+
+            if (fieldJToken == null)
+                return result;
 
             var attachments = new List<(string Url, string Name, string ContentType)>();
             if (fieldJToken.Type == JTokenType.Array)
@@ -471,15 +499,14 @@ namespace Apps.Lark.Actions
             }
 
             if (!attachments.Any())
-                throw new PluginApplicationException(
-                    $"No valid attachments found in field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') for record '{record.RecordID}'.");
+                return result;
 
             foreach (var attachment in attachments)
             {
                 var downloadRequest = new RestRequest(attachment.Url, Method.Get);
                 var downloadResponse = await larkClient.ExecuteAsync(downloadRequest);
                 if (!downloadResponse.IsSuccessStatusCode)
-                    throw new PluginApplicationException($"File download failed; Code: {downloadResponse.StatusCode}; URL: {attachment.Url}");
+                    continue;
 
                 string contentType = attachment.ContentType ?? downloadResponse.ContentType ?? "application/octet-stream";
                 var fileContent = new BlackbirdFile(new MemoryStream(downloadResponse.RawBytes), attachment.Name, contentType);

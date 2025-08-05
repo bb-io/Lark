@@ -21,7 +21,7 @@ namespace Apps.Lark.Models.Response
     public class DateFieldResponse
     {
         [Display("Date value")]
-       public DateTime DateValue { get; set; }
+       public DateTime? DateValue { get; set; }
        
     }
 }

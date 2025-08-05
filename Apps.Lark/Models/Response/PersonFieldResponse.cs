@@ -35,6 +35,6 @@ namespace Apps.Lark.Models.Response
         public string Name { get; set; }
 
         [Display("User mention")]
-        public string UserMention => $"<at user_id=\"{Id}\">{Name}</at>";
+        public string UserMention => string.IsNullOrEmpty(Id) ? "" : $"<at user_id=\"{Id}\">{Name}</at>";
     }
 }

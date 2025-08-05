@@ -45,7 +45,7 @@ namespace Tests.Lark
                 new UpdateRecordRequest
                 {
                     FieldName = "Custom text column name",
-                    NewValue="Hello my new value from upate action locally "
+                    NewValue="dfgdfg Hello my new value from upate action locally "
                     //NewDateValue= DateTime.UtcNow.AddDays(2),
                     //NewValues = new List<string> { "Option 12", "Option 21345435" },
                     //Attachment = new FileReference { Name = "Test3.png" }

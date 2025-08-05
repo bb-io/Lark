@@ -11,6 +11,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Webhooks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Net;
 
@@ -100,13 +101,10 @@ namespace Apps.Lark.Webhooks
             if (payload == null)
                 throw new Exception("No serializable payload was found in incoming request.");
 
-            var schemaRequest = new RestRequest(
-                $"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields",
-                Method.Get);
-            var schemaResponse = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(schemaRequest);
-            var schemaByFieldId = schemaResponse.Data.Items.ToDictionary(i => i.FieldId, i => i);
-
-            var schemaByFieldName = schemaResponse.Data.Items.ToDictionary(i => i.FieldName, i => i);
+            var schemaDto = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(
+                new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields", Method.Get));
+            var schemaByFieldId = schemaDto.Data.Items.ToDictionary(i => i.FieldId, i => i);
+            var schemaByFieldName = schemaDto.Data.Items.ToDictionary(i => i.FieldName, i => i);
 
             bool isValid = true;
             if (!string.IsNullOrEmpty(filter.FieldId))
@@ -116,18 +114,33 @@ namespace Apps.Lark.Webhooks
                     if (!schemaByFieldName.TryGetValue(filter.FieldId, out var schemaItem))
                         return false;
 
-                    var before = action.BeforeValue
+                    var beforeRaw = action.BeforeValue
                         .FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)
                         ?.FieldValueData;
-                    var after = action.AfterValue
+                    var afterRaw = action.AfterValue
                         .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)
                         ?.FieldValueData;
 
-                    if (before == null || after == null || string.Equals(before, after, StringComparison.Ordinal))
+                    if (beforeRaw == null || afterRaw == null || string.Equals(beforeRaw, afterRaw, StringComparison.Ordinal))
                         return false;
 
-                    if (!string.IsNullOrEmpty(filter.Value) && !after.Contains(filter.Value))
+                    JToken afterToken;
+                    try
+                    {
+                        afterToken = JToken.Parse(afterRaw);
+                    }
+                    catch
+                    {
+                        afterToken = JValue.CreateString(afterRaw);
+                    }
+
+                    var afterText = BaseRecordJsonParser.ConvertFieldToString(afterToken, schemaItem.FieldTypeId);
+
+                    if (!string.IsNullOrEmpty(filter.Value)
+                        && !afterText.Contains(filter.Value, StringComparison.OrdinalIgnoreCase))
+                    {
                         return false;
+                    }
 
                     return true;
                 });
@@ -191,15 +204,17 @@ namespace Apps.Lark.Webhooks
                     BaseId = baseId.AppId,
                     TableId = payload.Event.TableId,
                     RecordId = payload.Event.ActionList.First().RecordId,
-                    UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
+                    UpdateTime = DateTimeOffset
+                                      .FromUnixTimeSeconds(payload.Event.UpdateTime)
+                                      .UtcDateTime,
                     BeforeFields = beforeRecords
-                        .SelectMany(r => r.Fields)
-                        .DistinctBy(f => f.FieldId)
-                        .ToList(),
+                                      .SelectMany(r => r.Fields)
+                                      .DistinctBy(f => f.FieldId)
+                                      .ToList(),
                     AfterFields = afterRecords
-                        .SelectMany(r => r.Fields)
-                        .DistinctBy(f => f.FieldId)
-                        .ToList()
+                                      .SelectMany(r => r.Fields)
+                                      .DistinctBy(f => f.FieldId)
+                                      .ToList()
                 },
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };

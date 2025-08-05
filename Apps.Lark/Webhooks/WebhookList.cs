@@ -97,22 +97,31 @@ namespace Apps.Lark.Webhooks
             [WebhookParameter] BaseTableRequest tableId, [WebhookParameter] BaseTableFiltersRequest filter)
         {
             var payload = JsonConvert.DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString());
-
             if (payload == null)
                 throw new Exception("No serializable payload was found in incoming request.");
 
-            bool isValid = true;
+            var schemaRequest = new RestRequest(
+                $"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields",
+                Method.Get);
+            var schemaResponse = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(schemaRequest);
+            var schemaByFieldId = schemaResponse.Data.Items.ToDictionary(i => i.FieldId, i => i);
 
+            var schemaByFieldName = schemaResponse.Data.Items.ToDictionary(i => i.FieldName, i => i);
+
+            bool isValid = true;
             if (!string.IsNullOrEmpty(filter.FieldId))
             {
                 isValid = payload.Event.ActionList.Any(action =>
                 {
+                    if (!schemaByFieldName.TryGetValue(filter.FieldId, out var schemaItem))
+                        return false;
+
                     var before = action.BeforeValue
-                                   .FirstOrDefault(bv => bv.FieldId == filter.FieldId)
-                                   ?.FieldValueData;
+                        .FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)
+                        ?.FieldValueData;
                     var after = action.AfterValue
-                                   .FirstOrDefault(av => av.FieldId == filter.FieldId)
-                                   ?.FieldValueData;
+                        .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)
+                        ?.FieldValueData;
 
                     if (before == null || after == null || string.Equals(before, after, StringComparison.Ordinal))
                         return false;
@@ -134,19 +143,45 @@ namespace Apps.Lark.Webhooks
                 };
             }
 
-            var schemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields", Method.Get);
-            var schemaResponse = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(schemaRequest);
-            var schemaByFieldId = schemaResponse.Data.Items.ToDictionary(item => item.FieldId, item => item);
+            var beforeRecords = payload.Event.ActionList
+                .Select(action => BaseRecordJsonParser.ConvertToRecord(
+                    JsonConvert.SerializeObject(new
+                    {
+                        data = new
+                        {
+                            record = new
+                            {
+                                record_id = action.RecordId,
+                                fields = action.BeforeValue
+                                    .ToDictionary(
+                                        bv => schemaByFieldId[bv.FieldId].FieldName,
+                                        bv => bv.FieldValueData)
+                            }
+                        }
+                    }),
+                    schemaByFieldName))
+                .Where(r => r != null)
+                .ToList();
 
-            var beforeRecords = payload.Event.ActionList.Select(action => BaseRecordJsonParser.ConvertToRecord(
-                JsonConvert.SerializeObject(new { data = new { record = new { record_id = action.RecordId, fields = action.BeforeValue.ToDictionary(bv => schemaByFieldId[bv.FieldId].FieldName, bv => bv.FieldValueData) } } }),
-                schemaByFieldId.ToDictionary(kvp => kvp.Value.FieldName, kvp => kvp.Value)
-            )).Where(r => r != null).ToList();
-
-            var afterRecords = payload.Event.ActionList.Select(action => BaseRecordJsonParser.ConvertToRecord(
-                JsonConvert.SerializeObject(new { data = new { record = new { record_id = action.RecordId, fields = action.AfterValue.ToDictionary(av => schemaByFieldId[av.FieldId].FieldName, av => av.FieldValueData) } } }),
-                schemaByFieldId.ToDictionary(kvp => kvp.Value.FieldName, kvp => kvp.Value)
-            )).Where(r => r != null).ToList();
+            var afterRecords = payload.Event.ActionList
+                .Select(action => BaseRecordJsonParser.ConvertToRecord(
+                    JsonConvert.SerializeObject(new
+                    {
+                        data = new
+                        {
+                            record = new
+                            {
+                                record_id = action.RecordId,
+                                fields = action.AfterValue
+                                    .ToDictionary(
+                                        av => schemaByFieldId[av.FieldId].FieldName,
+                                        av => av.FieldValueData)
+                            }
+                        }
+                    }),
+                    schemaByFieldName))
+                .Where(r => r != null)
+                .ToList();
 
             return new WebhookResponse<UpdatedRecordResponse>
             {
@@ -157,8 +192,14 @@ namespace Apps.Lark.Webhooks
                     TableId = payload.Event.TableId,
                     RecordId = payload.Event.ActionList.First().RecordId,
                     UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
-                    BeforeFields = beforeRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList(),
-                    AfterFields = afterRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList()
+                    BeforeFields = beforeRecords
+                        .SelectMany(r => r.Fields)
+                        .DistinctBy(f => f.FieldId)
+                        .ToList(),
+                    AfterFields = afterRecords
+                        .SelectMany(r => r.Fields)
+                        .DistinctBy(f => f.FieldId)
+                        .ToList()
                 },
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };

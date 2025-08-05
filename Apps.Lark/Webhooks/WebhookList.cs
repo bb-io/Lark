@@ -97,63 +97,46 @@ namespace Apps.Lark.Webhooks
         public async Task<WebhookResponse<UpdatedRecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseRequest baseId,
             [WebhookParameter] BaseTableRequest tableId, [WebhookParameter] BaseTableFiltersRequest filter)
         {
-            var payload = JsonConvert.DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString());
-            if (payload == null)
-                throw new Exception("No serializable payload was found in incoming request.");
+            var payload = JsonConvert
+            .DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString())
+            ?? throw new Exception("No serializable payload was found in incoming request.");
 
             var schemaDto = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(
                 new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields", Method.Get));
             var schemaByFieldId = schemaDto.Data.Items.ToDictionary(i => i.FieldId, i => i);
             var schemaByFieldName = schemaDto.Data.Items.ToDictionary(i => i.FieldName, i => i);
 
-            bool isValid = true;
             if (!string.IsNullOrEmpty(filter.FieldId))
             {
-                isValid = payload.Event.ActionList.Any(action =>
+                var passes = payload.Event.ActionList.Any(action =>
                 {
                     if (!schemaByFieldName.TryGetValue(filter.FieldId, out var schemaItem))
                         return false;
 
                     var beforeRaw = action.BeforeValue
-                        .FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)
-                        ?.FieldValueData;
+                                         .FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)
+                                         ?.FieldValueData;
                     var afterRaw = action.AfterValue
-                        .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)
-                        ?.FieldValueData;
+                                         .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)
+                                         ?.FieldValueData;
 
-                    if (beforeRaw == null || afterRaw == null || string.Equals(beforeRaw, afterRaw, StringComparison.Ordinal))
+                    if (beforeRaw == null || afterRaw == null
+                        || string.Equals(beforeRaw, afterRaw, StringComparison.Ordinal))
                         return false;
 
                     JToken afterToken;
-                    try
-                    {
-                        afterToken = JToken.Parse(afterRaw);
-                    }
-                    catch
-                    {
-                        afterToken = JValue.CreateString(afterRaw);
-                    }
+                    try { afterToken = JToken.Parse(afterRaw); }
+                    catch { afterToken = JValue.CreateString(afterRaw); }
 
-                    var afterText = BaseRecordJsonParser.ConvertFieldToString(afterToken, schemaItem.FieldTypeId);
+                    var afterText = BaseRecordJsonParser
+                        .ConvertFieldToString(afterToken, schemaItem.FieldTypeId);
 
-                    if (!string.IsNullOrEmpty(filter.Value)
-                        && !afterText.Contains(filter.Value, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return false;
-                    }
-
-                    return true;
+                    return string.IsNullOrEmpty(filter.Value)
+                        || afterText.Contains(filter.Value, StringComparison.OrdinalIgnoreCase);
                 });
-            }
 
-            if (!isValid)
-            {
-                return new WebhookResponse<UpdatedRecordResponse>
-                {
-                    HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-                    Result = null,
-                    ReceivedWebhookRequestType = WebhookRequestType.Default
-                };
+                if (!passes)
+                    return PreflightResponse<UpdatedRecordResponse>();
             }
 
             var beforeRecords = payload.Event.ActionList
@@ -205,18 +188,28 @@ namespace Apps.Lark.Webhooks
                     TableId = payload.Event.TableId,
                     RecordId = payload.Event.ActionList.First().RecordId,
                     UpdateTime = DateTimeOffset
-                                      .FromUnixTimeSeconds(payload.Event.UpdateTime)
-                                      .UtcDateTime,
+                                       .FromUnixTimeSeconds(payload.Event.UpdateTime)
+                                       .UtcDateTime,
                     BeforeFields = beforeRecords
-                                      .SelectMany(r => r.Fields)
-                                      .DistinctBy(f => f.FieldId)
-                                      .ToList(),
+                                       .SelectMany(r => r.Fields)
+                                       .DistinctBy(f => f.FieldId)
+                                       .ToList(),
                     AfterFields = afterRecords
-                                      .SelectMany(r => r.Fields)
-                                      .DistinctBy(f => f.FieldId)
-                                      .ToList()
+                                       .SelectMany(r => r.Fields)
+                                       .DistinctBy(f => f.FieldId)
+                                       .ToList()
                 },
                 ReceivedWebhookRequestType = WebhookRequestType.Default
+            };
+        }
+
+        private static WebhookResponse<T> PreflightResponse<T>()
+        where T : class
+        {
+            return new WebhookResponse<T>
+            {
+                ReceivedWebhookRequestType = WebhookRequestType.Preflight,
+                Result = null
             };
         }
     }

@@ -103,12 +103,25 @@ namespace Apps.Lark.Webhooks
 
             bool isValid = true;
 
-            if (!string.IsNullOrEmpty(filter.FieldId) || !string.IsNullOrEmpty(filter.Value))
+            if (!string.IsNullOrEmpty(filter.FieldId))
             {
                 isValid = payload.Event.ActionList.Any(action =>
-                    action.BeforeValue.Any(bv => bv.FieldId == filter.FieldId && (string.IsNullOrEmpty(filter.Value) || bv.FieldValueData.Contains(filter.Value))) ||
-                    action.AfterValue.Any(av => av.FieldId == filter.FieldId && (string.IsNullOrEmpty(filter.Value) || av.FieldValueData.Contains(filter.Value)))
-                );
+                {
+                    var before = action.BeforeValue
+                                   .FirstOrDefault(bv => bv.FieldId == filter.FieldId)
+                                   ?.FieldValueData;
+                    var after = action.AfterValue
+                                   .FirstOrDefault(av => av.FieldId == filter.FieldId)
+                                   ?.FieldValueData;
+
+                    if (before == null || after == null || string.Equals(before, after, StringComparison.Ordinal))
+                        return false;
+
+                    if (!string.IsNullOrEmpty(filter.Value) && !after.Contains(filter.Value))
+                        return false;
+
+                    return true;
+                });
             }
 
             if (!isValid)

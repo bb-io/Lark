@@ -1,4 +1,5 @@
 ﻿using Apps.Appname;
+using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
 using Apps.Lark.Polling.Models;
 using Apps.Lark.Webhooks.Handlers;
@@ -87,7 +88,8 @@ namespace Apps.Lark.Webhooks
 
 
         [Webhook("On base table record updated", typeof(BaseAppRecordChangedHandler), Description = "This event is triggered when the base table record updates")]
-        public async Task<WebhookResponse<BaseAppRecordChanged>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseTableFiltersRequest filter)
+        public async Task<WebhookResponse<UpdatedRecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseRequest baseId,
+            [WebhookParameter] BaseTableRequest tableId, [WebhookParameter] BaseTableFiltersRequest filter)
         {
             var payload = JsonConvert.DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString());
 
@@ -96,19 +98,17 @@ namespace Apps.Lark.Webhooks
 
             bool isValid = true;
 
-            if (!string.IsNullOrEmpty(filter.RecordId))
+            if (!string.IsNullOrEmpty(filter.FieldId) || !string.IsNullOrEmpty(filter.Value))
             {
-                isValid = payload.Event.ActionList.Any(action => action.RecordId == filter.RecordId);
-            }
-
-            if (!string.IsNullOrEmpty(filter.Status))
-            {
-                isValid = isValid && payload.Event.ActionList.Any(action => action.Action == filter.Status);
+                isValid = payload.Event.ActionList.Any(action =>
+                    action.BeforeValue.Any(bv => bv.FieldId == filter.FieldId && (string.IsNullOrEmpty(filter.Value) || bv.FieldValueData.Contains(filter.Value))) ||
+                    action.AfterValue.Any(av => av.FieldId == filter.FieldId && (string.IsNullOrEmpty(filter.Value) || av.FieldValueData.Contains(filter.Value)))
+                );
             }
 
             if (!isValid)
             {
-                return new WebhookResponse<BaseAppRecordChanged>
+                return new WebhookResponse<UpdatedRecordResponse>
                 {
                     HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
                     Result = null,
@@ -116,13 +116,44 @@ namespace Apps.Lark.Webhooks
                 };
             }
 
-            return new WebhookResponse<BaseAppRecordChanged>
+            var beforeRecords = payload.Event.ActionList.Select(action => new UpdatedRecord
+            {
+                RecordId = action.RecordId,
+                TableId = payload.Event.TableId,
+                FileToken = payload.Event.FileToken,
+                UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
+                Fields = action.BeforeValue.Select(bv => new UpdatedField
+                {
+                    FieldId = bv.FieldId,
+                    FieldValue = bv.FieldValueData
+                }).ToList()
+            }).ToList();
+
+            var afterRecords = payload.Event.ActionList.Select(action => new UpdatedRecord
+            {
+                RecordId = action.RecordId,
+                TableId = payload.Event.TableId,
+                FileToken = payload.Event.FileToken,
+                UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
+                Fields = action.AfterValue.Select(av => new UpdatedField
+                {
+                    FieldId = av.FieldId,
+                    FieldValue = av.FieldValueData
+                }).ToList()
+            }).ToList();
+
+            return new WebhookResponse<UpdatedRecordResponse>
             {
                 HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-                Result = payload.Event,
+                Result = new UpdatedRecordResponse
+                {
+                    BaseId = baseId.AppId,
+                    TableId = payload.Event.TableId,
+                    BeforeRecords = beforeRecords,
+                    AfterRecords = afterRecords
+                },
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };
-
         }
     }
 }

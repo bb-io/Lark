@@ -93,7 +93,7 @@ namespace Apps.Lark.Webhooks
 
 
         [Webhook("On base table record updated", typeof(BaseAppRecordChangedHandler), Description = "This event is triggered when the base table record updates")]
-        public async Task<WebhookResponse<RecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseRequest baseId,
+        public async Task<WebhookResponse<UpdatedRecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseRequest baseId,
             [WebhookParameter] BaseTableRequest tableId, [WebhookParameter] BaseTableFiltersRequest filter)
         {
             var payload = JsonConvert.DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString());
@@ -113,7 +113,7 @@ namespace Apps.Lark.Webhooks
 
             if (!isValid)
             {
-                return new WebhookResponse<RecordResponse>
+                return new WebhookResponse<UpdatedRecordResponse>
                 {
                     HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
                     Result = null,
@@ -122,7 +122,6 @@ namespace Apps.Lark.Webhooks
             }
 
             var schemaRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields", Method.Get);
-          
             var schemaResponse = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(schemaRequest);
             var schemaByFieldId = schemaResponse.Data.Items.ToDictionary(item => item.FieldId, item => item);
 
@@ -136,16 +135,17 @@ namespace Apps.Lark.Webhooks
                 schemaByFieldId.ToDictionary(kvp => kvp.Value.FieldName, kvp => kvp.Value)
             )).Where(r => r != null).ToList();
 
-            return new WebhookResponse<RecordResponse>
+            return new WebhookResponse<UpdatedRecordResponse>
             {
                 HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-                Result = new RecordResponse
+                Result = new UpdatedRecordResponse
                 {
                     BaseId = baseId.AppId,
                     TableId = payload.Event.TableId,
                     RecordId = payload.Event.ActionList.First().RecordId,
                     UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
-                    Fields = beforeRecords.SelectMany(r => r.Fields).Concat(afterRecords.SelectMany(r => r.Fields)).DistinctBy(f => f.FieldId).ToList()
+                    BeforeFields = beforeRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList(),
+                    AfterFields = afterRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList()
                 },
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };

@@ -27,9 +27,9 @@ namespace Tests.Lark
         {
             var action = new BaseTableActions(InvocationContext, FileManager);
             var response = await action.GetRecord(
-                new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" },
-                new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" },
-                new GetBaseRecord { RecordID = "recaqVFKCW" });
+                new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
+                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" },
+                new GetBaseRecord { RecordID = "recuOXSfSwQlV8" });
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);
             Console.WriteLine(json);
@@ -45,7 +45,7 @@ namespace Tests.Lark
                 new UpdateRecordRequest
                 {
                     FieldName = "Custom text column name",
-                    NewValue="Hello my new value from upate action locally "
+                    NewValue="___Hello my new value from upate action locally "
                     //NewDateValue= DateTime.UtcNow.AddDays(2),
                     //NewValues = new List<string> { "Option 12", "Option 21345435" },
                     //Attachment = new FileReference { Name = "Test3.png" }
@@ -148,7 +148,6 @@ namespace Tests.Lark
             Assert.IsNotNull(response);
         }
 
-
         [TestMethod]
         public async Task GetBaseTableUsedRange_IssSuccess()
         {
@@ -160,9 +159,6 @@ namespace Tests.Lark
             Console.WriteLine(json);
             Assert.IsNotNull(response);
         }
-
-
-        //InsertBaseTableRow
 
         [TestMethod]
         public async Task InsertBaseTableRow_IssSuccess()

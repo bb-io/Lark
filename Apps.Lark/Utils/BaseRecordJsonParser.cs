@@ -91,36 +91,28 @@ public static class BaseRecordJsonParser
         if (field.Type == JTokenType.String)
         {
             var raw = field.Value<string>() ?? string.Empty;
-            if (raw.TrimStart().StartsWith("["))
+            var trimmed = raw.TrimStart();
+            if ((trimmed.StartsWith("[") && trimmed.EndsWith("]")) ||
+                (trimmed.StartsWith("{") && trimmed.EndsWith("}")))
             {
                 try
                 {
-                    var arr = JArray.Parse(raw);
-                    return fieldType switch
-                    {
-                        BaseFieldTypes.Multiline
-                      or BaseFieldTypes.MultipleOptions
-                      or BaseFieldTypes.Person
-                      or BaseFieldTypes.CreatedBy
-                      or BaseFieldTypes.ModifiedBy
-                      or BaseFieldTypes.Attachment
-                      or BaseFieldTypes.GroupChat => StringFromArray(", ", arr, "text"),
+                    JToken parsed = trimmed.StartsWith("[")
+                        ? (JToken)JArray.Parse(raw)
+                        : JObject.Parse(raw);
 
-                        BaseFieldTypes.Lookup => StringFromArray(", ", (arr.First?["value"] as JArray)),
-                        BaseFieldTypes.OneWayLink
-                      or BaseFieldTypes.TwoWayLink => StringFromRelation(arr as JToken),
-
-                        _ => raw
-                    };
+                    return ConvertFieldToString(parsed, fieldType);
                 }
                 catch
                 {
-                    return raw;
+                    field = JValue.CreateString(raw);
                 }
             }
-            return raw;
+            else
+            {
+                field = JValue.CreateString(raw);
+            }
         }
-
 
         return fieldType switch
         {

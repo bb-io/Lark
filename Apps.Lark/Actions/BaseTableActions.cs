@@ -170,6 +170,10 @@ namespace Apps.Lark.Actions
             {
                 valueToUpdate = update.NewValue;
             }
+            else if (update.NewCheckboxValue != null)
+            {
+                valueToUpdate = update.NewCheckboxValue;
+            }
             else
             {
                 throw new PluginMisconfigurationException("No new value provided. Specify NewValue, NewValues, NewDateValue or Attachment.");

@@ -164,11 +164,14 @@ namespace Tests.Lark
         [TestMethod]
         public async Task InsertBaseTableRow_IssSuccess()
         {
+            var baseRequest = new BaseRequest { AppId = "BqWJbD6KnaJpaMsj1JZjwekIpqx" };
+            var tableRequest = new BaseTableRequest { TableId = "tblehXTNgiIpEOpA" };
             var action = new BaseTableActions(InvocationContext, FileManager);
-            await action.InsertBaseTableRow(new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" },
-                new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" });
 
-            Assert.IsTrue(true);
+            var response = await action.InsertBaseTableRow(baseRequest, tableRequest);
+
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented));
+            Assert.IsFalse(string.IsNullOrWhiteSpace(response.RecordId));
         }
     }
 }

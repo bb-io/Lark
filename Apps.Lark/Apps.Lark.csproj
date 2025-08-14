@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Product>Lark [Beta]</Product>
         <Description>Lark's comprehensive and in-depth open capabilities serve as a hub of information and an entry point for businesses</Description>
-        <Version>1.0.17</Version>
+        <Version>1.0.18</Version>
         <AssemblyName>Apps.Lark</AssemblyName>
     </PropertyGroup>
 

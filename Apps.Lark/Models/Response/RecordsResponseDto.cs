@@ -39,8 +39,6 @@ namespace Apps.Lark.Models.Response
         [JsonProperty("record_id")]
         [Display("Record ID")]
         public string? RecordId { get; set; }
-        
-
 
         [Display("Field values")]
         public List<string> FieldValues

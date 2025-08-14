@@ -38,18 +38,32 @@ namespace Apps.Lark.Actions
         }
 
         [Action("Insert row to base table", Description = "Inserts row to base table ")]
-        public async Task InsertBaseTableRow([ActionParameter] BaseRequest input,
+        public async Task<RecordIdResponse> InsertBaseTableRow(
+            [ActionParameter] BaseRequest input,
             [ActionParameter] BaseTableRequest table)
         {
-            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-
-            var request = new RestRequest($"bitable/v1/apps/{input.AppId}/tables/{table.TableId}/records", Method.Post);
-            var fields = new Dictionary<string, object>
+            var body = new
             {
+                fields = new Dictionary<string, object>(),
             };
-            var body = new { fields };
+
+            var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest($"bitable/v1/apps/{input.AppId}/tables/{table.TableId}/records", Method.Post);
             request.AddJsonBody(body);
-            await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(request);
+
+            var response = await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(request);
+
+            if (response.Data?.Record?.RecordId == null)
+            {
+                var errorCode = response.Code >= 0 ? "Error code {errorCode}." : string.Empty;
+                var errorMessage = string.IsNullOrWhiteSpace(response.Message) ? response.Message : string.Empty;
+                throw new PluginApplicationException($"Failed to insert record. {errorCode} {errorMessage}");
+            }
+
+            return new()
+            {
+                RecordId = response.Data.Record.RecordId,
+            };
         }
 
 

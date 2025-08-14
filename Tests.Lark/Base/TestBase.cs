@@ -29,4 +29,7 @@ public class TestBase
 
         FileManager = new FileManager();
     }
+
+    internal static void PrintResult(object response)
+        => Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented));
 }

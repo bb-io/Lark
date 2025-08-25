@@ -155,6 +155,14 @@ To update field "Date", please use input property "New date value". To update fi
 - **On base table new rows added** triggers when new rows are added to a base table. To use this event, you need to add a field of type "Date created" to your table.
 - **On base table row updated** triggers when a base table row, or optionally a specific field, is updated. To use this event, you need to add a field of type "Date modified" to your table.
 
+> Note: For the **On base table row updated** event to work, you need to set up the event subscriptions in your Lark application.
+> 
+> Go to the **Events and callbacks** section and add the "App record change" event subscription. You will need to provide a callback URL: `https://bridge.blackbird.io/api/webhooks/lark`.
+>
+> After setting up the event subscription, make sure to add `bitable:app` and `drive:drive` from both Tenant and User scopes as well as `contact:user.employee_id:readonly`
+>
+> Once both the event subscription and scopes are set up, make sure to save the changes and publish a new version of your application.
+
 ## Feedback
 
 Do you want to use this app or do you have feedback on our implementation? Reach out to us using the [established channels](https://www.blackbird.io/) or create an issue.

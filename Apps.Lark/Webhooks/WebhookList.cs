@@ -97,6 +97,12 @@ namespace Apps.Lark.Webhooks
         public async Task<WebhookResponse<UpdatedRecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseRequest baseId,
             [WebhookParameter] BaseTableRequest tableId, [WebhookParameter] BaseTableFiltersRequest filter)
         {
+            InvocationContext.Logger?.LogInformation("[Lark WebhookLogger] Invoked webhook", null);
+
+            var payloadJson = JsonConvert.SerializeObject(webhookRequest, Formatting.Indented);
+            InvocationContext.Logger?.LogInformation(
+                $"[Lark WebhookLogger] Payload received from server JSON: {payloadJson}", null);
+
             var payload = JsonConvert
             .DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString())
             ?? throw new Exception("No serializable payload was found in incoming request.");
@@ -135,9 +141,13 @@ namespace Apps.Lark.Webhooks
                         || afterText.Contains(filter.Value, StringComparison.OrdinalIgnoreCase);
                 });
 
+                InvocationContext.Logger?.LogInformation($"[Lark WebhookLogger] Filter passes: {passes}", null);
+
                 if (!passes)
                     return PreflightResponse<UpdatedRecordResponse>();
             }
+
+            InvocationContext.Logger?.LogInformation("[Lark WebhookLogger] Checkpoint: building before/after records", null);
 
             var beforeRecords = payload.Event.ActionList
                 .Select(action => BaseRecordJsonParser.ConvertToRecord(
@@ -179,26 +189,23 @@ namespace Apps.Lark.Webhooks
                 .Where(r => r != null)
                 .ToList();
 
+            var result = new UpdatedRecordResponse
+            {
+                BaseId = baseId.AppId,
+                TableId = payload.Event.TableId,
+                RecordId = payload.Event.ActionList.First().RecordId,
+                UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
+                BeforeFields = beforeRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList(),
+                AfterFields = afterRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList()
+            };
+
+            InvocationContext.Logger?.LogInformation(
+                $"[Lark WebhookLogger] Completed (RecordId={result.RecordId}; BeforeFields={result.BeforeFields.Count}; AfterFields={result.AfterFields.Count})", null);
+
             return new WebhookResponse<UpdatedRecordResponse>
             {
                 HttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK),
-                Result = new UpdatedRecordResponse
-                {
-                    BaseId = baseId.AppId,
-                    TableId = payload.Event.TableId,
-                    RecordId = payload.Event.ActionList.First().RecordId,
-                    UpdateTime = DateTimeOffset
-                                       .FromUnixTimeSeconds(payload.Event.UpdateTime)
-                                       .UtcDateTime,
-                    BeforeFields = beforeRecords
-                                       .SelectMany(r => r.Fields)
-                                       .DistinctBy(f => f.FieldId)
-                                       .ToList(),
-                    AfterFields = afterRecords
-                                       .SelectMany(r => r.Fields)
-                                       .DistinctBy(f => f.FieldId)
-                                       .ToList()
-                },
+                Result = result,
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };
         }

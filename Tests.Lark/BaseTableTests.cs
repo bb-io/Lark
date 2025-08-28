@@ -13,7 +13,7 @@ public class BaseTableTests : TestBase
     public async Task SearchBaseTables_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
+        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
 
         // Execute
         var response = await _baseTableActions.SearchBaseTables(baseRequest);
@@ -26,9 +26,9 @@ public class BaseTableTests : TestBase
     public async Task GetBaseRecord_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
-        var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
-        var recordRequest = new GetBaseRecord { RecordID = "recuOXSfSwQlV8" };
+        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
+        var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
 
         // Execute
         var response = await _baseTableActions.GetRecord(baseRequest, tableRequest, recordRequest);

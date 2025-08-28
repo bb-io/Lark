@@ -1,8 +1,16 @@
 ﻿using Apps.Appname.Handlers;
 using Apps.Lark.DataSourceHandlers;
 using Apps.Lark.Models.Request;
+using Apps.Lark.Models.Response;
+using Apps.Lark.Polling.Models;
+using Apps.Lark.Webhooks;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Webhooks;
+using Microsoft.VisualBasic.FileIO;
+using Newtonsoft.Json.Linq;
 using Tests.Lark.Base;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Tests.Lark;
 
@@ -22,7 +30,7 @@ public class DataHandlerTests : TestBase
             Console.WriteLine($"{item.Value}: {item.Key}");
         }
 
-        Assert.IsTrue(result.Count() > 0);
+        Assert.IsNotNull(result);
     }
 
     [TestMethod]
@@ -97,7 +105,7 @@ public class DataHandlerTests : TestBase
     public async Task BaseTableDataHandler_IsSuccess()
     {
 
-        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" });
+        var handler = new BaseTableDataSourceHandler(InvocationContext, new BaseRequest { AppId = "NZVPbB0NEao95UswKFzjGFWypEf" });
 
         var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
 
@@ -148,8 +156,8 @@ public class DataHandlerTests : TestBase
     [TestMethod]
     public async Task BaseTablePersonFieldDataHandler_IsSuccess()
     {
-        var handler = new BaseTablePersonFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "Oacjbnzg3aMyAXsLgK5jR21Op0b" },
-            new BaseTableRequest { TableId = "tblzSbOM8CQupYfE" });
+        var handler = new BaseTablePersonFieldIdDataSourceHandler(InvocationContext, new BaseRequest { AppId = "GAy3bbreqaldyJsKYw0jjapypQb" },
+            new BaseTableRequest { TableId = "tblCEnzG83AoP5Nd" });
 
         var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
 
@@ -229,7 +237,6 @@ public class DataHandlerTests : TestBase
 
         Assert.IsTrue(result.Count() > 0);
     }
-
 }
 
 

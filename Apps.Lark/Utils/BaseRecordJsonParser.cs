@@ -119,25 +119,18 @@ public static class BaseRecordJsonParser
             BaseFieldTypes.Multiline => field.Type == JTokenType.String
                 ? field.Value<string>() ?? string.Empty
                 : StringFromArray(string.Empty, field as JArray, "text"),
+
             BaseFieldTypes.MultipleOptions => field.Type == JTokenType.Array
-            ? StringFromArray(", ", field as JArray)
-            : field.ToString(),
-            BaseFieldTypes.Person => field.Type == JTokenType.Array
-            ? StringFromArray(", ", field as JArray, "name")
-            : field.Type == JTokenType.Object
-                ? field["name"]?.Value<string>() ?? field.ToString()
+                ? StringFromArray(", ", field as JArray)
                 : field.ToString(),
-            BaseFieldTypes.CreatedBy => field.Type == JTokenType.Array
-            ? StringFromArray(", ", field as JArray, "name")
-            : field.Type == JTokenType.Object
-                ? field["name"]?.Value<string>() ?? field.ToString()
-                : field.ToString(),
-            BaseFieldTypes.ModifiedBy => field.Type == JTokenType.Array
-                ? StringFromArray(", ", field as JArray, "name")
-                : field.Type == JTokenType.Object
-                    ? field["name"]?.Value<string>() ?? field.ToString()
-                    : field.ToString(),
+
+            BaseFieldTypes.Person => ExtractPersonName(field),
+            BaseFieldTypes.CreatedBy => ExtractPersonName(field),
+            BaseFieldTypes.ModifiedBy => ExtractPersonName(field),
+            BaseFieldTypes.GroupChat => ExtractPersonName(field),
+
             BaseFieldTypes.Attachment => StringFromArray(", ", field as JArray, "name"),
+
             BaseFieldTypes.Lookup => field.Type switch
             {
                 JTokenType.Array => StringFromArray(", ", field as JArray),
@@ -146,7 +139,6 @@ public static class BaseRecordJsonParser
                     : (field["value"]?.ToString() ?? string.Empty),
                 _ => field.Value<string>() ?? string.Empty
             },
-            BaseFieldTypes.GroupChat => StringFromArray(", ", field as JArray, "name"),
 
             BaseFieldTypes.Date => StringFromTimestamp(field),
             BaseFieldTypes.DateCreated => StringFromTimestamp(field),
@@ -162,20 +154,43 @@ public static class BaseRecordJsonParser
             BaseFieldTypes.Checkbox => field.Value<bool>() ? "True" : "False",
 
             BaseFieldTypes.Link => field.Type == JTokenType.Object
-           ? (field["link"]?.Value<string>()
-              ?? field["text"]?.Value<string>()
-              ?? string.Empty)
-           : (field.Value<string>() ?? string.Empty),
+                ? (field["link"]?.Value<string>() ?? field["text"]?.Value<string>() ?? string.Empty)
+                : (field.Value<string>() ?? string.Empty),
 
             BaseFieldTypes.Location => field.Type == JTokenType.Object
-            ? (field["full_address"]?.Value<string>() ?? string.Empty)
-            : (field.Value<string>() ?? string.Empty),
-
+                ? (field["full_address"]?.Value<string>() ?? string.Empty)
+                : (field.Value<string>() ?? string.Empty),
 
             BaseFieldTypes.Formula => StringFromFormula(field),
 
             _ => string.Empty
         };
+    }
+
+    private static string ExtractPersonName(JToken t)
+    {
+        if (t == null || t.Type == JTokenType.Null) return string.Empty;
+
+        if (t is JArray arr)
+        {
+            var names = arr.Select(ExtractPersonName)
+                           .Where(s => !string.IsNullOrEmpty(s));
+            return string.Join(", ", names);
+        }
+
+        if (t is JObject o)
+        {
+            if (o.TryGetValue("users", out var usersTok) && usersTok is JArray usersArr)
+                return ExtractPersonName(usersArr);
+
+            return o["name"]?.ToString()
+                ?? o["en_name"]?.ToString()
+                ?? o["enName"]?.ToString()
+                ?? o["email"]?.ToString()
+                ?? string.Empty;
+        }
+
+        return t.Value<string>() ?? string.Empty;
     }
 
     private static string StringFromArray(string joinBy, JArray? arr, string property)

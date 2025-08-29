@@ -40,14 +40,29 @@ public class BaseTableTests : TestBase
     [TestMethod]
     public async Task UpdateBaseRecord_IssSuccess()
     {
-        // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
-        var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
-        var recordRequest = new GetBaseRecord { RecordID = "recuOXSfSwQlV8" };
+
+        //var baseRequest = new BaseRequest { AppId = "CaIEb6s8raCpwgsQLvQjq1mVpAA" };
+        //var tableRequest = new BaseTableRequest { TableId = "tblyvFMc1WkiPolZ" };
+        //var recordRequest = new GetBaseRecord { RecordID = "rec67FxYSY" };
+        //var updateRequest = new UpdateRecordRequest
+        //{
+        //    FieldName = "Text",
+        //    NewValue = "Remarks new test"
+        //    //NewDateValue= DateTime.UtcNow.AddDays(2),
+        //    //NewValues = new List<string> { "Option 12", "Option 21345435" },
+        //    //Attachment = new FileReference { Name = "Test3.png" }
+        //    //NewCheckboxValue = false
+        //};
+
+
+        //Setup parameters
+        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
+        var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
         var updateRequest = new UpdateRecordRequest
         {
-            FieldName = "Custom text column name",
-            NewValue = "Hello my new value from upate action locally "
+            FieldName = "Remarks 备注",
+            NewValue = "Remarks 1"
             //NewDateValue= DateTime.UtcNow.AddDays(2),
             //NewValues = new List<string> { "Option 12", "Option 21345435" },
             //Attachment = new FileReference { Name = "Test3.png" }
@@ -97,10 +112,10 @@ public class BaseTableTests : TestBase
     public async Task GetBaseRecordTextTypeEntry_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
-        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
-        var recordRequest = new GetBaseRecord { RecordID = "recaqVFKCW" };
-        var fieldRequest = new GetTextFieldRequest { FieldId = "fldBAPISc0" };
+        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
+        var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
+        var fieldRequest = new GetTextFieldRequest { FieldId = "fldKO35rlm" };
 
         // Execute
         var response = await _baseTableActions.GetTextEntry(baseRequest, tableRequest, recordRequest, fieldRequest);
@@ -116,7 +131,7 @@ public class BaseTableTests : TestBase
         var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
         var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
         var recordRequest = new GetBaseRecord { RecordID = "recaqVFKCW" };
-        var fieldRequest = new GetFieldRequest { FieldId = "fldlvpfJ7u" };
+        var fieldRequest = new GetFieldRequest { FieldId = "fldKO35rlm" };
 
         // Execute
         var response = await _baseTableActions.GetMultiOptionValueFromRecord(baseRequest, tableRequest, recordRequest, fieldRequest);
@@ -161,8 +176,8 @@ public class BaseTableTests : TestBase
     public async Task GetBaseTableUsedRange_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
-        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
+        var baseRequest = new BaseRequest { AppId = "CaIEb6s8raCpwgsQLvQjq1mVpAA" };
+        var tableRequest = new BaseTableRequest { TableId = "tblyvFMc1WkiPolZ" };
 
         // Execute
         var response = await _baseTableActions.GetBaseRecords(baseRequest, tableRequest);

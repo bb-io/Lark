@@ -62,7 +62,7 @@ public class BaseTableTests : TestBase
         var updateRequest = new UpdateRecordRequest
         {
             FieldName = "Remarks 备注",
-            NewValue = "Remarks"
+            NewValue = "Remarks 1"
             //NewDateValue= DateTime.UtcNow.AddDays(2),
             //NewValues = new List<string> { "Option 12", "Option 21345435" },
             //Attachment = new FileReference { Name = "Test3.png" }

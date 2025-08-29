@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Net;
+using System.Text.Json;
 
 namespace Apps.Lark.Webhooks
 {
@@ -99,7 +100,15 @@ namespace Apps.Lark.Webhooks
         {
             InvocationContext.Logger?.LogInformation("[Lark WebhookLogger] Invoked webhook", null);
 
-            var payloadJson = JsonConvert.SerializeObject(webhookRequest, Formatting.Indented);
+            var payloadJson = JsonConvert.SerializeObject(new
+            {
+                Headers = webhookRequest.Headers,
+                HttpMethod = webhookRequest.HttpMethod?.Method,
+                Body = PrepareBodyForLog(webhookRequest.Body),
+                Url = webhookRequest.Url,
+                QueryParameters = webhookRequest.QueryParameters
+            }, Formatting.Indented);
+
             InvocationContext.Logger?.LogInformation(
                 $"[Lark WebhookLogger] Payload received from server JSON: {payloadJson}", null);
 
@@ -208,6 +217,24 @@ namespace Apps.Lark.Webhooks
                 Result = result,
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };
+        }
+
+        private static string GetRawBody(object? body)
+        {
+            if (body == null) return string.Empty;
+            if (body is string s) return s;
+            if (body is JObject jo) return jo.ToString(Formatting.None);
+            if (body is JToken jt) return jt.ToString(Formatting.None);
+            if (body is JsonElement je) return je.GetRawText();
+            return body.ToString() ?? string.Empty;
+        }
+
+        private static object? PrepareBodyForLog(object? body)
+        {
+            var raw = GetRawBody(body);
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+            try { return JToken.Parse(raw); }
+            catch { return raw; }
         }
 
         private static WebhookResponse<T> PreflightResponse<T>()

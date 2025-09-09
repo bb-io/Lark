@@ -61,8 +61,8 @@ public class BaseTableTests : TestBase
         var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
         var updateRequest = new UpdateRecordRequest
         {
-            FieldName = "Status 状态",
-            NewValue = "Tested"
+            FieldName = "Remarks 备注",
+            NewValue = "Remarks"
             //NewDateValue= DateTime.UtcNow.AddDays(2),
             //NewValues = new List<string> { "Option 12", "Option 21345435" },
             //Attachment = new FileReference { Name = "Test3.png" }

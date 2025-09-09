@@ -1,5 +1,6 @@
 ﻿using Apps.Appname;
 using Apps.Appname.Api;
+using Apps.Lark.Constants;
 using Apps.Lark.Models.Dtos;
 using Apps.Lark.Models.Request;
 using Apps.Lark.Models.Response;
@@ -15,6 +16,7 @@ using Newtonsoft.Json.Linq;
 using RestSharp;
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Apps.Lark.Webhooks
 {
@@ -113,45 +115,87 @@ namespace Apps.Lark.Webhooks
                 $"[Lark WebhookLogger] Payload received from server JSON: {payloadJson}", null);
 
             var payload = JsonConvert
-            .DeserializeObject<BasePayload<BaseAppRecordChanged>>(webhookRequest.Body.ToString())
-            ?? throw new Exception("No serializable payload was found in incoming request.");
+                .DeserializeObject<BasePayload<BaseAppRecordChanged>>(GetRawBody(webhookRequest.Body))
+                ?? throw new Exception("No serializable payload was found in incoming request.");
 
             var schemaDto = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(
                 new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields", Method.Get));
+
             var schemaByFieldId = schemaDto.Data.Items.ToDictionary(i => i.FieldId, i => i);
-            var schemaByFieldName = schemaDto.Data.Items.ToDictionary(i => i.FieldName, i => i);
+            var schemaByFieldName = schemaDto.Data.Items
+                .ToDictionary(i => i.FieldName, i => i, StringComparer.OrdinalIgnoreCase);
 
-            if (!string.IsNullOrEmpty(filter.FieldId))
+            if (!string.IsNullOrWhiteSpace(filter.FieldId))
             {
-                var passes = payload.Event.ActionList.Any(action =>
+                var originalKey = filter.FieldId.Trim();
+
+                schemaByFieldId.TryGetValue(originalKey, out var schemaItem);
+                if (schemaItem == null)
                 {
-                    if (!schemaByFieldName.TryGetValue(filter.FieldId, out var schemaItem))
-                        return false;
+                    var cleanedName = Regex.Replace(originalKey, @"\s*\([^)]+\)\s*$", "").Trim();
+                    schemaByFieldName.TryGetValue(cleanedName, out schemaItem);
+                }
 
-                    var beforeRaw = action.BeforeValue
-                                         .FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)
-                                         ?.FieldValueData;
+                if (schemaItem == null)
+                {
+                    InvocationContext.Logger?.LogInformation(
+                        $"[Lark WebhookLogger] Filter field not found. Provided='{filter.FieldId}'", null);
+                    return PreflightResponse<UpdatedRecordResponse>();
+                }
+
+                InvocationContext.Logger?.LogInformation(
+                    $"[Lark WebhookLogger] Filter target: FieldName='{schemaItem.FieldName}', FieldId='{schemaItem.FieldId}', TypeId={schemaItem.FieldTypeId}, UiType='{schemaItem.FieldTypeName}'",
+                    null);
+
+                var passes = false;
+
+                foreach (var action in payload.Event.ActionList)
+                {
                     var afterRaw = action.AfterValue
-                                         .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)
-                                         ?.FieldValueData;
+                        .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)?.FieldValueData;
+                    var source = "after";
 
-                    if (beforeRaw == null || afterRaw == null
-                        || string.Equals(beforeRaw, afterRaw, StringComparison.Ordinal))
-                        return false;
+                    if (afterRaw == null)
+                    {
+                        afterRaw = await GetRecordFieldRawAsync(baseId.AppId, payload.Event.TableId, action.RecordId, schemaItem);
+                        source = "live";
+                    }
 
-                    JToken afterToken;
-                    try { afterToken = JToken.Parse(afterRaw); }
-                    catch { afterToken = JValue.CreateString(afterRaw); }
+                    if (afterRaw == null)
+                    {
+                        InvocationContext.Logger?.LogInformation(
+                            $"[Lark WebhookLogger] Filter: field '{schemaItem.FieldName}' has no value (recordId={action.RecordId})",
+                            null);
+                        continue;
+                    }
 
-                    var afterText = BaseRecordJsonParser
-                        .ConvertFieldToString(afterToken, schemaItem.FieldTypeId);
+                    var afterText = ToDisplayStringForFilter(afterRaw, schemaItem);
 
-                    return string.IsNullOrEmpty(filter.Value)
-                        || afterText.Contains(filter.Value, StringComparison.OrdinalIgnoreCase);
-                });
+                    InvocationContext.Logger?.LogInformation(
+                        $"[Lark WebhookLogger] Filter debug: field='{schemaItem.FieldName}' typeId={schemaItem.FieldTypeId} source='{source}' raw='{afterRaw}' text='{afterText}' compareTo='{filter.Value}'",
+                        null);
+
+                    if (string.IsNullOrWhiteSpace(filter.Value))
+                    {
+                        passes = true;
+                        break;
+                    }
+
+                    var needle = filter.Value.Trim();
+                    if (!string.IsNullOrEmpty(afterText) && afterText.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        passes = true;
+                        break;
+                    }
+
+                    if (afterRaw.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        passes = true;
+                        break;
+                    }
+                }
 
                 InvocationContext.Logger?.LogInformation($"[Lark WebhookLogger] Filter passes: {passes}", null);
-
                 if (!passes)
                     return PreflightResponse<UpdatedRecordResponse>();
             }
@@ -209,7 +253,8 @@ namespace Apps.Lark.Webhooks
             };
 
             InvocationContext.Logger?.LogInformation(
-                $"[Lark WebhookLogger] Completed (RecordId={result.RecordId}; BeforeFields={result.BeforeFields.Count}; AfterFields={result.AfterFields.Count})", null);
+                $"[Lark WebhookLogger] Completed (RecordId={result.RecordId}; BeforeFields={result.BeforeFields.Count}; AfterFields={result.AfterFields.Count})",
+                null);
 
             return new WebhookResponse<UpdatedRecordResponse>
             {
@@ -218,6 +263,116 @@ namespace Apps.Lark.Webhooks
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };
         }
+
+        private async Task<string?> GetRecordFieldRawAsync(string appId, string tableId, string recordId, BaseTableSchemaApiItemDto schemaItem)
+        {
+            try
+            {
+                var req = new RestRequest($"bitable/v1/apps/{appId}/tables/{tableId}/records/{recordId}", Method.Get);
+                var obj = await Client.ExecuteWithErrorHandling<JObject>(req);
+
+                var fieldsByName = obj["data"]?["record"]?["fields"] as JObject;
+                if (fieldsByName == null) return null;
+
+                var token = fieldsByName[schemaItem.FieldName]
+                            ?? fieldsByName[schemaItem.FieldId];
+
+                if (token == null) return null;
+                return token.Type == JTokenType.String
+                    ? token.Value<string>()
+                    : token.ToString(Formatting.None);
+            }
+            catch (Exception ex)
+            {
+                InvocationContext.Logger?.LogInformation(
+                    $"[Lark WebhookLogger] GetRecordFieldRawAsync failed: {ex.Message}", null);
+                return null;
+            }
+        }
+
+        private static string ToDisplayStringForFilter(string raw, BaseTableSchemaApiItemDto schemaItem)
+        {
+            if (schemaItem.FieldTypeId == BaseFieldTypes.SingleOption)
+            {
+                var trimmed = raw?.Trim('"') ?? string.Empty;
+                if (trimmed.StartsWith("opt", StringComparison.OrdinalIgnoreCase))
+                    return TryResolveOptionText(schemaItem.Property, trimmed) ?? trimmed;
+
+                return trimmed;
+            }
+
+            if (schemaItem.FieldTypeId == BaseFieldTypes.MultipleOptions)
+            {
+                var text = TryMapMultiOptions(schemaItem.Property, raw);
+                if (!string.IsNullOrEmpty(text)) return text;
+                return raw ?? string.Empty;
+            }
+
+            return raw ?? string.Empty;
+        }
+
+        private static string? TryResolveOptionText(JObject? property, string optId)
+        {
+            try
+            {
+                var prop = property as JToken;
+                if (prop == null) return null;
+
+                foreach (var path in new[] { "$..options[*]", "$..option_list[*]", "$..enum_options[*]", "$..choices[*]" })
+                {
+                    foreach (var o in prop.SelectTokens(path))
+                    {
+                        var id = o?["id"]?.Value<string>() ?? o?["value"]?.Value<string>();
+                        if (!string.Equals(id, optId, StringComparison.Ordinal)) continue;
+
+                        var textToken = o?["text"] ?? o?["name"] ?? o?["title"];
+                        if (textToken == null) return null;
+
+                        if (textToken.Type == JTokenType.String)
+                            return textToken.Value<string>();
+
+                        if (textToken.Type == JTokenType.Object)
+                        {
+                            var obj = (JObject)textToken;
+                            var preferred = new[] { "en_us", "en", "zh_cn", "zh", "ja_jp" };
+                            foreach (var k in preferred)
+                                if (obj.TryGetValue(k, StringComparison.OrdinalIgnoreCase, out var v) && !string.IsNullOrWhiteSpace(v?.ToString()))
+                                    return v!.ToString();
+
+                            var first = obj.Properties().Select(p => p.Value?.ToString()).FirstOrDefault(v => !string.IsNullOrWhiteSpace(v));
+                            if (!string.IsNullOrWhiteSpace(first)) return first;
+                        }
+                    }
+                }
+            }
+            catch {}
+
+            return null;
+        }
+
+        private static string? TryMapMultiOptions(JObject? property, string raw)
+        {
+            try
+            {
+                var ids = JsonConvert.DeserializeObject<List<string>>(raw ?? "");
+                if (ids == null || ids.Count == 0) return null;
+
+                var names = ids.Select(id =>
+                {
+                    var t = id?.Trim('"') ?? string.Empty;
+                    return t.StartsWith("opt", StringComparison.OrdinalIgnoreCase)
+                        ? TryResolveOptionText(property, t) ?? t
+                        : t;
+                });
+
+                return string.Join(", ", names.Where(s => !string.IsNullOrWhiteSpace(s)));
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
 
         private static string GetRawBody(object? body)
         {

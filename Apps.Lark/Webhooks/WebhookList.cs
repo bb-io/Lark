@@ -151,14 +151,24 @@ namespace Apps.Lark.Webhooks
 
                 foreach (var action in payload.Event.ActionList)
                 {
-                    var afterRaw = action.AfterValue
-                        .FirstOrDefault(av => av.FieldId == schemaItem.FieldId)?.FieldValueData;
-                    var source = "after";
+                    var afterRaw = action.AfterValue.FirstOrDefault(av => av.FieldId == schemaItem.FieldId)?.FieldValueData;
+                    var beforeRaw = action.BeforeValue.FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)?.FieldValueData;
 
+                    var afterSource = "after";
                     if (afterRaw == null)
                     {
                         afterRaw = await GetRecordFieldRawAsync(baseId.AppId, payload.Event.TableId, action.RecordId, schemaItem);
-                        source = "live";
+                        afterSource = "live";
+                    }
+
+                    var changed = !(AreEqualValues(beforeRaw, afterRaw));
+                    InvocationContext.Logger?.LogInformation(
+                        $"[Lark WebhookLogger] Delta check: field='{schemaItem.FieldName}' changed={changed} (before='{TrimForLog(beforeRaw)}', after='{TrimForLog(afterRaw)}')",
+                        null);
+
+                    if (!changed)
+                    {
+                        continue;
                     }
 
                     if (afterRaw == null)
@@ -170,9 +180,8 @@ namespace Apps.Lark.Webhooks
                     }
 
                     var afterText = ToDisplayStringForFilter(afterRaw, schemaItem);
-
                     InvocationContext.Logger?.LogInformation(
-                        $"[Lark WebhookLogger] Filter debug: field='{schemaItem.FieldName}' typeId={schemaItem.FieldTypeId} source='{source}' raw='{afterRaw}' text='{afterText}' compareTo='{filter.Value}'",
+                        $"[Lark WebhookLogger] Filter debug: field='{schemaItem.FieldName}' typeId={schemaItem.FieldTypeId} source='{afterSource}' raw='{afterRaw}' text='{afterText}' compareTo='{filter.Value}'",
                         null);
 
                     if (string.IsNullOrWhiteSpace(filter.Value))
@@ -182,7 +191,8 @@ namespace Apps.Lark.Webhooks
                     }
 
                     var needle = filter.Value.Trim();
-                    if (!string.IsNullOrEmpty(afterText) && afterText.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (!string.IsNullOrEmpty(afterText) &&
+                        afterText.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         passes = true;
                         break;
@@ -194,6 +204,7 @@ namespace Apps.Lark.Webhooks
                         break;
                     }
                 }
+
 
                 InvocationContext.Logger?.LogInformation($"[Lark WebhookLogger] Filter passes: {passes}", null);
                 if (!passes)
@@ -262,6 +273,48 @@ namespace Apps.Lark.Webhooks
                 Result = result,
                 ReceivedWebhookRequestType = WebhookRequestType.Default
             };
+        }
+
+        private static string TrimForLog(string? s)
+        {
+            if (string.IsNullOrEmpty(s)) return "∅";
+            return s.Length > 120 ? s.Substring(0, 117) + "..." : s;
+        }
+
+        private static bool AreEqualValues(string? beforeRaw, string? afterRaw)
+        {
+            if (string.IsNullOrWhiteSpace(beforeRaw) && string.IsNullOrWhiteSpace(afterRaw))
+                return true;
+
+            if (TryParseJson(beforeRaw, out var jb) && TryParseJson(afterRaw, out var ja))
+                return JToken.DeepEquals(jb, ja);
+
+            var nb = NormalizeScalar(beforeRaw);
+            var na = NormalizeScalar(afterRaw);
+            return string.Equals(nb, na, StringComparison.Ordinal);
+        }
+
+        private static bool TryParseJson(string? raw, out JToken token)
+        {
+            token = default!;
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            try
+            {
+                token = JToken.Parse(raw);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string NormalizeScalar(string? s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+
+            var t = s.Trim().Trim('"').Trim();
+            return t;
         }
 
         private async Task<string?> GetRecordFieldRawAsync(string appId, string tableId, string recordId, BaseTableSchemaApiItemDto schemaItem)
@@ -345,7 +398,7 @@ namespace Apps.Lark.Webhooks
                     }
                 }
             }
-            catch {}
+            catch { }
 
             return null;
         }

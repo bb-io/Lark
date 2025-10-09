@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Product>Lark [Beta]</Product>
         <Description>Lark's comprehensive and in-depth open capabilities serve as a hub of information and an entry point for businesses</Description>
-        <Version>1.0.22</Version>
+        <Version>1.0.23</Version>
         <AssemblyName>Apps.Lark</AssemblyName>
     </PropertyGroup>
 
@@ -15,7 +15,7 @@
 	</ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.0" />
+		<PackageReference Include="Blackbird.Applications.Sdk.Blueprints" Version="1.0.0-rc.10308" />
         <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.26" />
     </ItemGroup>
 

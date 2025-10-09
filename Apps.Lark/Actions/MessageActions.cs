@@ -15,9 +15,6 @@ namespace Apps.Appname.Actions;
 [ActionList("Messages")]
 public class MessageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
 {
-    private IFileManagementClient FileManagementClient { get; set; } = fileManagementClient;
-
-
     [Action("Search chats",Description ="Returnes list of chats")]
     public async Task<ListChatsResponse> SearchChats([ActionParameter] SearchChatsOptions options)
     {
@@ -133,7 +130,7 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
 
         var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
 
-        await using var fileStream = await FileManagementClient.DownloadAsync(input.FileContent);
+        await using var fileStream = await fileManagementClient.DownloadAsync(input.FileContent);
         using var memoryStream = new MemoryStream();
         await fileStream.CopyToAsync(memoryStream);
         var fileBytes = memoryStream.ToArray();
@@ -267,5 +264,4 @@ public class MessageActions(InvocationContext invocationContext, IFileManagement
             Sender = response.Data.Sender
         };
     }
-
 }

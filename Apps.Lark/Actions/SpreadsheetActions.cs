@@ -7,13 +7,14 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 
 namespace Apps.Lark.Actions;
 
 [ActionList("Spreadsheets")]
-public class SpreadsheetActions(InvocationContext invocationContext) : Invocable(invocationContext)
+public class SpreadsheetActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
 {
     [Action("Create spreadsheet", Description = "Create spreadsheet")]
     public async Task<CreateSpreadsheetResult> CreateSpreadsheet([ActionParameter] CreateSpreadsheetRequest input)

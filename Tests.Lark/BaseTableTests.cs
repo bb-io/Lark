@@ -28,7 +28,7 @@ public class BaseTableTests : TestBase
         // Setup parameters
         var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
         var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
+        var recordRequest = new GetBaseRecord { RecordID = "recwBAHnpk" };
 
         // Execute
         var response = await _baseTableActions.GetRecord(baseRequest, tableRequest, recordRequest);
@@ -41,33 +41,30 @@ public class BaseTableTests : TestBase
     public async Task UpdateBaseRecord_IssSuccess()
     {
 
-        //var baseRequest = new BaseRequest { AppId = "CaIEb6s8raCpwgsQLvQjq1mVpAA" };
-        //var tableRequest = new BaseTableRequest { TableId = "tblyvFMc1WkiPolZ" };
-        //var recordRequest = new GetBaseRecord { RecordID = "rec67FxYSY" };
-        //var updateRequest = new UpdateRecordRequest
-        //{
-        //    FieldName = "Text",
-        //    NewValue = "Remarks new test"
-        //    //NewDateValue= DateTime.UtcNow.AddDays(2),
-        //    //NewValues = new List<string> { "Option 12", "Option 21345435" },
-        //    //Attachment = new FileReference { Name = "Test3.png" }
-        //    //NewCheckboxValue = false
-        //};
-
-
-        //Setup parameters
         var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
         var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
+        var recordRequest = new GetBaseRecord { RecordID = "recwBAHnpk" };
         var updateRequest = new UpdateRecordRequest
         {
-            FieldName = "Status 状态",
-            NewValue = "Approved"
+            FieldName = "Flight",
+            //NewValue = "Remarks new text"
             //NewDateValue= DateTime.UtcNow.AddDays(2),
             //NewValues = new List<string> { "Option 12", "Option 21345435" },
             //Attachment = new FileReference { Name = "Test3.png" }
             //NewCheckboxValue = false
+            NewLinkUrl = ""
         };
+
+
+        //Setup parameters
+        //var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        //var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
+        //var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
+        //var updateRequest = new UpdateRecordRequest
+        //{
+        //    FieldName = "Status 状态",
+        //    NewValue = "Approved"
+        //};
 
         // Execute
         var response = await _baseTableActions.UpdateRecord(baseRequest, tableRequest, updateRequest, recordRequest);

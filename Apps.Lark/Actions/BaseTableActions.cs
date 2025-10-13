@@ -141,7 +141,15 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
 
         object valueToUpdate;
 
-        if (update.Attachment != null)
+        if (!string.IsNullOrWhiteSpace(update.NewLinkUrl))
+        {
+            valueToUpdate = new
+            {
+                text = update.NewLinkUrl,
+                link = update.NewLinkUrl
+            };
+        }
+        else if (update.Attachment != null)
         {
             await using var fs = await fileManagementClient.DownloadAsync(update.Attachment);
             using var ms = new MemoryStream();

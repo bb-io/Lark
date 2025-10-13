@@ -25,5 +25,8 @@ namespace Apps.Lark.Models.Request
 
         [Display("Attachment", Description = "Use this option, only when you update the attachment")]
         public FileReference? Attachment { get; set; }
+
+        [Display("New link URL", Description = "Use for Link/URL column")]
+        public string? NewLinkUrl { get; set; }
     }
 }

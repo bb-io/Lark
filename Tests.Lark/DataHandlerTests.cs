@@ -34,6 +34,22 @@ public class DataHandlerTests : TestBase
     }
 
     [TestMethod]
+    public async Task FileDataSourceHandler_IsSuccess()
+    {
+        var handler = new FileDataSourceHandler(InvocationContext);
+
+        var result = await handler.GetDataAsync(new DataSourceContext { }, CancellationToken.None);
+
+        Console.WriteLine($"Total: {result.Count()}");
+        foreach (var item in result)
+        {
+            Console.WriteLine($"{item.Value}: {item.Key}");
+        }
+
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
     public async Task SpreadsheetHandler_IsSuccess()
     {
         var handler = new SpreadsheetDataSourceHandler(InvocationContext);

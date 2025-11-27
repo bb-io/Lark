@@ -13,7 +13,7 @@ using System.Security.AccessControl;
 
 namespace Apps.Lark.Actions
 {
-    [ActionList("Drive")]
+    //[ActionList("Drive")]
     public class DriveActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : Invocable(invocationContext)
     {
         [Action("Create folder")]

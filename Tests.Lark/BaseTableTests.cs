@@ -28,7 +28,7 @@ public class BaseTableTests : TestBase
         // Setup parameters
         var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
         var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        var recordRequest = new GetBaseRecord { RecordID = "recwBAHnpk" };
+        var recordRequest = new GetBaseRecord { RecordID = "recXGMWy5P" };
 
         // Execute
         var response = await _baseTableActions.GetRecord(baseRequest, tableRequest, recordRequest);
@@ -43,7 +43,7 @@ public class BaseTableTests : TestBase
 
         var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
         var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        var recordRequest = new GetBaseRecord { RecordID = "recwBAHnpk" };
+        var recordRequest = new GetBaseRecord { RecordID = "recUleloHU" };
         var updateRequest = new UpdateRecordRequest
         {
             FieldName = "Flight",
@@ -52,7 +52,7 @@ public class BaseTableTests : TestBase
             //NewValues = new List<string> { "Option 12", "Option 21345435" },
             //Attachment = new FileReference { Name = "Test3.png" }
             //NewCheckboxValue = false
-            NewLinkUrl = ""
+            NewLinkUrl = "https://us-1.blackbird.io/n/79/flights/6927c126df0da03b0c32ef00"
         };
 
 

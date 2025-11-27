@@ -142,22 +142,6 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
         if (selected.Fields == null || !selected.Fields.ContainsKey(update.FieldName))
             throw new PluginMisconfigurationException(
                 $"Field '{update.FieldName}' does not exist in the record.");
-
-        //var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
-
-        //var listReq = new RestRequest(
-        //    $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records?user_id_type=user_id",
-        //    Method.Get);
-        //var listResp = await larkClient.ExecuteWithErrorHandling<RecordsResponseDto>(listReq);
-        //var items = listResp.Data?.Items ?? new List<RecordItemDto>();
-
-        //var selected = items.FirstOrDefault(r => r.RecordId == record.RecordID);
-        //if (selected is null)
-        //    throw new PluginMisconfigurationException($"Record with ID '{record.RecordID}' not found in table {table.TableId}.");
-
-        //if (selected.Fields == null || !selected.Fields.ContainsKey(update.FieldName))
-        //    throw new PluginMisconfigurationException($"Field '{update.FieldName}' does not exist in the record.");
-
         object valueToUpdate;
 
         if (!string.IsNullOrWhiteSpace(update.NewLinkUrl))

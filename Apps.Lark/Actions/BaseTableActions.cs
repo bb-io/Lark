@@ -368,18 +368,13 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
         string textValue;
         if (fieldSchema.FieldTypeId == 15)
         {
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}'].link")
-                ?? throw new PluginMisconfigurationException($"Link field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
-
-            textValue = fieldJToken.Value<string>()
-                ?? throw new PluginMisconfigurationException($"Failed to retrieve link value for field '{fieldSchema.FieldName}' in record '{record.RecordID}'.");
+            var linkToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}'].link");
+            textValue = (linkToken == null || linkToken.Type == JTokenType.Null) ? string.Empty : (linkToken.Value<string>() ?? string.Empty);
         }
         else
         {
-            var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']")
-                ?? throw new PluginMisconfigurationException($"Text field '{fieldSchema.FieldName}' ('{fieldSchema.FieldTypeName}') not found or empty in record '{record.RecordID}'.");
-
-            textValue = fieldJToken.Value<string>() ?? string.Empty;
+            var fieldToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
+            textValue = (fieldToken == null || fieldToken.Type == JTokenType.Null) ? string.Empty : (fieldToken.Value<string>() ?? fieldToken.ToString());
         }
 
         return new TextFieldResponse

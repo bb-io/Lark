@@ -109,10 +109,10 @@ public class BaseTableTests : TestBase
     public async Task GetBaseRecordTextTypeEntry_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
-        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
-        var fieldRequest = new GetTextFieldRequest { FieldId = "fldKO35rlm" };
+        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
+        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        var recordRequest = new GetBaseRecord { RecordID = "recv4dsUUnD0eN" };
+        var fieldRequest = new GetTextFieldRequest { FieldId = "fldPVU5SOZ" };
 
         // Execute
         var response = await _baseTableActions.GetTextEntry(baseRequest, tableRequest, recordRequest, fieldRequest);
@@ -173,8 +173,8 @@ public class BaseTableTests : TestBase
     public async Task GetBaseTableUsedRange_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "CaIEb6s8raCpwgsQLvQjq1mVpAA" };
-        var tableRequest = new BaseTableRequest { TableId = "tblyvFMc1WkiPolZ" };
+        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
+        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
 
         // Execute
         var response = await _baseTableActions.GetBaseRecords(baseRequest, tableRequest);

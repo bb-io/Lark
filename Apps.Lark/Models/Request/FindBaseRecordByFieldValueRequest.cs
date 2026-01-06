@@ -7,7 +7,7 @@ namespace Apps.Lark.Models.Request
     public class FindBaseRecordByFieldValueRequest
     {
         [Display("Field ID")]
-        [DataSource(typeof(BaseTableFieldDataSourceHandler))]
+        [DataSource(typeof(BaseTableFieldIdDataSourceHandler))]
         public string FieldId { get; set; }
 
         [Display("Value")]

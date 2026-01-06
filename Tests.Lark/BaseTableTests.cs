@@ -38,6 +38,21 @@ public class BaseTableTests : TestBase
     }
 
     [TestMethod]
+    public async Task FindBaseRecordByFieldValue_IssSuccess()
+    {
+        // Setup parameters
+        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
+        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        var valueRequest = new FindBaseRecordByFieldValueRequest { FieldId= "fldK0OQmBY", Value = "test" };
+
+        // Execute
+        var response = await _baseTableActions.FindBaseRecordByFieldValue(baseRequest, tableRequest, valueRequest);
+
+        // Print result and assert
+        PrintResult(response);
+    }
+
+    [TestMethod]
     public async Task UpdateBaseRecord_IssSuccess()
     {
 
@@ -79,10 +94,10 @@ public class BaseTableTests : TestBase
         // Setup parameters
         var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
         var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        //var recordRequest = new GetBaseRecord { RecordID = "recv4dsUUnD0eN" };
         var recordRequest = new GetBaseRecord { RecordID = "recv4dsUUnD0eN" };
-        //var recordRequest = new GetBaseRecord { RecordID = "recv4iIgDz7zVC" };
-        var fieldRequest = new GetPersonFieldRequest { FieldId = "fldzzsTlot" };
-        //var fieldRequest = new GetPersonFieldRequest { FieldId = "fldLJDixIb" };
+        //var fieldRequest = new GetPersonFieldRequest { FieldId = "fldzzsTlot" };
+        var fieldRequest = new GetPersonFieldRequest { FieldId = "fldLJDixIb" };
 
         // Execute
         var response = await _baseTableActions.GetPersonEntry(baseRequest, tableRequest, recordRequest, fieldRequest);

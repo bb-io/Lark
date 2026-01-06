@@ -544,4 +544,99 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
         }
         return result;
     }
+
+    [Action("Find base record by field value", 
+        Description = "Finds a base record by partial match in a text/url/link field.")]
+    public async Task<RecordResponse> FindBaseRecordByFieldValue(
+    [ActionParameter] BaseRequest baseId,
+    [ActionParameter] BaseTableRequest table,
+    [ActionParameter] FindBaseRecordByFieldValueRequest input)
+    {
+        if (string.IsNullOrWhiteSpace(input.FieldId))
+            throw new PluginMisconfigurationException("Field ID is required.");
+
+        if (string.IsNullOrWhiteSpace(input.Value))
+            throw new PluginMisconfigurationException("Value is required.");
+
+        var larkClient = new LarkClient(invocationContext.AuthenticationCredentialsProviders);
+
+        var field = await GetFieldById(larkClient, baseId.AppId, table.TableId, input.FieldId);
+        if (field is null)
+            throw new PluginMisconfigurationException($"Field '{input.FieldId}' was not found in the table schema.");
+
+        if (!IsSupportedTextUrlLinkField(field))
+            throw new PluginMisconfigurationException(
+                $"Field '{field.FieldName}' (Type: {field.FieldTypeName}) is not supported. Supported: Text, Url/Link.");
+
+        var recordId = await SearchFirstRecordIdByContains(
+            larkClient,
+            baseId.AppId,
+            table.TableId,
+            field.FieldName,
+            input.Value);
+
+        if (string.IsNullOrEmpty(recordId))
+            return EmptyRecord(baseId.AppId, table.TableId);
+
+        return await GetRecord(baseId, table, new GetBaseRecord { RecordID = recordId });
+    }
+
+    private record Condition(string FieldName, string Operator, string Value);
+
+    private async Task<BaseTableSchemaApiItemDto?> GetFieldById(LarkClient client, string appId, string tableId, string fieldId)
+    {
+        var req = new RestRequest($"bitable/v1/apps/{appId}/tables/{tableId}/fields", Method.Get);
+        var resp = await client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(req);
+        return resp.Data.Items.FirstOrDefault(x => x.FieldId == fieldId);
+    }
+
+    private static RecordResponse EmptyRecord(string baseId, string tableId)
+    {
+        return new RecordResponse
+        {
+            BaseId = baseId,
+            TableId = tableId,
+            RecordId = string.Empty,
+            Fields = new List<BaseRecordFieldListItemDto>()
+        };
+    }
+
+    private static bool IsSupportedTextUrlLinkField(BaseTableSchemaApiItemDto field)
+    {
+        return field.FieldTypeId == 1 || field.FieldTypeId == 15;
+    }
+
+    private async Task<string?> SearchFirstRecordIdByContains(
+    LarkClient client,
+    string appId,
+    string tableId,
+    string fieldName,
+    string value)
+    {
+        var endpoint = $"bitable/v1/apps/{appId}/tables/{tableId}/records/search";
+        var req = new RestRequest(endpoint, Method.Post);
+
+        var body = new
+        {
+            filter = new
+            {
+                conjunction = "and",
+                conditions = new[]
+                {
+                new
+                {
+                    field_name = fieldName,
+                    @operator = "contains",
+                    value = new[] { value }
+                }
+            }
+            },
+            page_size = 500
+        };
+
+        req.AddJsonBody(body);
+
+        var resp = await client.ExecuteWithErrorHandling<SearchRecordsResponseDto>(req);
+        return resp.Data?.Items?.FirstOrDefault()?.RecordId;
+    }
 }

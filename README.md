@@ -132,6 +132,7 @@ To update field "Date", please use input property "New date value". To update fi
 - **Get number entry from base table record** gets a number entry from a base table record
 - **Download attachments from base table record** downloads attachments from a base table record
 - **Insert row to base table** inserts a row to a base table
+- **Find base record by field value** finds a base record by partial match in a text/url/link field.
 
 ### Spreadsheets
 

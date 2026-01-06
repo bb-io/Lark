@@ -242,14 +242,17 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
 
         var fieldSchema = await BaseFiledSchemaParser.GetFieldSchema(larkClient, baseId.AppId, table.TableId, field.FieldId);
 
-        if (fieldSchema.FieldTypeId != 11 && fieldSchema.FieldTypeId != 1003 && fieldSchema.FieldTypeId != 1004)
+        if (fieldSchema.FieldTypeId != 11 && fieldSchema.FieldTypeId != 1003 && fieldSchema.FieldTypeId != 1004 && fieldSchema.FieldTypeId != 19)
             throw new PluginMisconfigurationException(
                 $"Field '{fieldSchema.FieldName}' (Type: {fieldSchema.FieldTypeName}) is not a person field");
 
         if (fieldSchema.FieldName.Contains("'"))
-            throw new PluginMisconfigurationException($"Fields with a single quote in name are not supported.");
+            throw new PluginMisconfigurationException("Fields with a single quote in name are not supported.");
 
-        var recordRequest = new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}?user_id_type=user_id", Method.Get);
+        var recordRequest = new RestRequest(
+            $"bitable/v1/apps/{baseId.AppId}/tables/{table.TableId}/records/{record.RecordID}?user_id_type=user_id",
+            Method.Get);
+
         var recordResponse = await larkClient.ExecuteWithErrorHandling(recordRequest);
 
         var recordResponseJToken = JToken.Parse(recordResponse.Content ?? "")
@@ -257,48 +260,55 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
 
         var fieldJToken = recordResponseJToken.SelectToken($"$.data.record.fields['{fieldSchema.FieldName}']");
 
-        if (fieldJToken == null)
-            return new PersonFieldResponse
-            {
-                Person = new PersonData
-                {
-                    Id = "",
-                    Name = ""
-                }
-            };
+        if (fieldJToken == null || fieldJToken.Type == JTokenType.Null)
+            return new PersonFieldResponse();
 
-        var users = new List<JObject>();
+        var userTokens = new List<JToken>();
+
         if (fieldJToken.Type == JTokenType.Array)
         {
-            users = fieldJToken.Cast<JObject>().ToList();
+            userTokens.AddRange(fieldJToken.Children());
         }
         else if (fieldJToken.Type == JTokenType.Object)
         {
-            users.Add(fieldJToken.ToObject<JObject>());
+            var usersArray = fieldJToken["users"];
+            if (usersArray != null && usersArray.Type == JTokenType.Array)
+            {
+                userTokens.AddRange(usersArray.Children());
+            }
+            else
+            {
+                userTokens.Add(fieldJToken);
+            }
         }
 
-        if (!users.Any())
-            return new PersonFieldResponse
+        if (!userTokens.Any())
+            return new PersonFieldResponse();
+
+        var persons = userTokens
+            .OfType<JObject>()
+            .Select(u =>
             {
-                Person = new PersonData
+                var id = u["id"]?.ToString() ?? "";
+                if (string.IsNullOrEmpty(id))
+                    id = u["userId"]?.ToString() ?? "";
+
+                return new PersonData
                 {
-                    Id = "",
-                    Name = ""
-                }
-            };
+                    Id = id,
+                    Name = u["name"]?.ToString() ?? ""
+                };
+            })
+            .Where(p => !string.IsNullOrEmpty(p.Id) || !string.IsNullOrEmpty(p.Name))
+            .ToList();
 
-        var user = users.First();
-        var userId = user["id"]?.ToString();
-        var userName = user["name"]?.ToString();
-
+        var first = persons.FirstOrDefault() ?? new PersonData();
 
         return new PersonFieldResponse
         {
-            Person = new PersonData
-            {
-                Id = userId ?? "",
-                Name = userName ?? ""
-            }
+            FirstPerson = first,
+            Persons = persons,
+            UserMentions = persons.Select(p => p.UserMention).ToList()
         };
     }
 

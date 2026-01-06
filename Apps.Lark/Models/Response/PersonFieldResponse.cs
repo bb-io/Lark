@@ -6,8 +6,16 @@ namespace Apps.Lark.Models.Response
     public class PersonFieldResponse
     {
         [JsonProperty("person")]
-        [Display("Person")]
-        public PersonData Person { get; set; }
+        [Display("First person")]
+        public PersonData FirstPerson { get; set; }
+
+        [JsonProperty("persons")]
+        [Display("All linked persons")]
+        public List<PersonData> Persons { get; set; } = new();
+
+        [JsonProperty("user_mentions")]
+        [Display("User mention strings")]
+        public List<string> UserMentions { get; set; } = new();
     }
 
     public class PersonFieldEntry

@@ -43,7 +43,7 @@ public class BaseTableTests : TestBase
         // Setup parameters
         var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
         var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
-        var valueRequest = new FindBaseRecordByFieldValueRequest { FieldId= "fldK0OQmBY", Value = "test" };
+        var valueRequest = new FindBaseRecordByFieldValueRequest { FieldId= "fld7R0hQQb", Value = "695cf0a5c25196cea9820b36" };
 
         // Execute
         var response = await _baseTableActions.FindBaseRecordByFieldValue(baseRequest, tableRequest, valueRequest);

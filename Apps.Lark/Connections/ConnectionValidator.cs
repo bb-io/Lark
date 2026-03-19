@@ -3,6 +3,7 @@ using Apps.Appname.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using RestSharp;
+using System.Net;
 
 namespace Apps.Appname.Connections;
 
@@ -14,20 +15,28 @@ public class ConnectionValidator : IConnectionValidator
     {
         try
         {
-            var client = new LarkClient(authenticationCredentialsProviders);
             var appId = authenticationCredentialsProviders.First(v => v.KeyName == CredsNames.AppId).Value;
+            var appSecret = authenticationCredentialsProviders.First(v => v.KeyName == CredsNames.AppSecret).Value;
 
-            var request = new RestRequest($"/application/v6/applications/{appId}", Method.Get);
-            request.AddParameter("lang", "en_us");
+            using var client = new LarkClient(authenticationCredentialsProviders);
+            var request = new RestRequest("/auth/v3/tenant_access_token/internal", Method.Post);
+            request.AddBody(new { app_id = appId, app_secret = appSecret });
 
             var response = await client.ExecuteAsync(request, cancellationToken);
 
-            return new()
-            {
-                IsValid = response.IsSuccessful,
-            };
+            if (response.StatusCode is HttpStatusCode.Unauthorized)
+                throw new HttpRequestException(
+                    $"{response.StatusCode}: {response.Content ?? response.ErrorMessage}",
+                    null,
+                    HttpStatusCode.Unauthorized);
+
+            if (response.StatusCode is HttpStatusCode.Forbidden)
+                throw new HttpRequestException(
+                    $"{response.StatusCode}: {response.Content ?? response.ErrorMessage}",
+                    null,
+                    HttpStatusCode.Forbidden);
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized)
         {
             return new()
             {
@@ -35,6 +44,19 @@ public class ConnectionValidator : IConnectionValidator
                 Message = ex.Message
             };
         }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Forbidden)
+        {
+            return new()
+            {
+                IsValid = false,
+                Message = ex.Message
+            };
+        }
+        catch (Exception)
+        {
+            return new() { IsValid = true };
+        }
 
+        return new() { IsValid = true };
     }
 }

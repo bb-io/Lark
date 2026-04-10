@@ -26,9 +26,9 @@ public class BaseTableTests : TestBase
     public async Task GetBaseRecord_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
-        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
-        var recordRequest = new GetBaseRecord { RecordID = "recv4dsUUnD0eN" };
+        var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
+        var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
+        var recordRequest = new GetBaseRecord { RecordID = "rec5HK3Mja" };
 
         // Execute
         var response = await _baseTableActions.GetRecord(baseRequest, tableRequest, recordRequest);
@@ -56,30 +56,30 @@ public class BaseTableTests : TestBase
     public async Task UpdateBaseRecord_IssSuccess()
     {
 
-        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
-        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        var recordRequest = new GetBaseRecord { RecordID = "recUleloHU" };
-        var updateRequest = new UpdateRecordRequest
-        {
-            FieldName = "Flight",
-            //NewValue = "Remarks new text"
-            //NewDateValue= DateTime.UtcNow.AddDays(2),
-            //NewValues = new List<string> { "Option 12", "Option 21345435" },
-            //Attachment = new FileReference { Name = "Test3.png" }
-            //NewCheckboxValue = false
-            NewLinkUrl = "https://us-1.blackbird.io/n/79/flights/6927c126df0da03b0c32ef00"
-        };
+        //var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
+        //var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
+        //var recordRequest = new GetBaseRecord { RecordID = "rec5HK3Mja" };
+        //var updateRequest = new UpdateRecordRequest
+        //{
+        //    FieldName = "Custom text column name",
+        //    NewValue = "Remarks new text again"
+        //    //NewDateValue= DateTime.UtcNow.AddDays(2),
+        //    //NewValues = new List<string> { "Option 12", "Option 21345435" },
+        //    //Attachment = new FileReference { Name = "Test3.png" }
+        //    //NewCheckboxValue = false
+        //    //NewLinkUrl = "https://us-1.blackbird.io/n/79/flights/6927c126df0da03b0c32ef00"
+        //};
 
 
         //Setup parameters
-        //var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
-        //var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
-        //var recordRequest = new GetBaseRecord { RecordID = "recvd08jOE" };
-        //var updateRequest = new UpdateRecordRequest
-        //{
-        //    FieldName = "Status 状态",
-        //    NewValue = "Approved"
-        //};
+        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
+        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        var recordRequest = new GetBaseRecord { RecordID = "recv4dsUUnD0eN" };
+        var updateRequest = new UpdateRecordRequest
+        {
+            FieldName = "Status",
+            NewValue = "Approved"  //Approved  Cancelled
+        };
 
         // Execute
         var response = await _baseTableActions.UpdateRecord(baseRequest, tableRequest, updateRequest, recordRequest);
@@ -190,6 +190,8 @@ public class BaseTableTests : TestBase
     public async Task GetBaseTableUsedRange_IssSuccess()
     {
         // Setup parameters
+        //var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
+        //var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
         var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
         var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
 

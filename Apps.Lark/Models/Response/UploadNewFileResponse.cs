@@ -4,16 +4,16 @@ namespace Apps.Lark.Models.Response
 {
     public class UploadNewFileResponse
     {
-        [Display("File token")]
+        [Display("File")]
         public string FileToken { get; set; } = default!;
 
-        [Display("Name")]
+        [Display("File name")]
         public string Name { get; set; } = default!;
 
-        [Display("Parent token")]
+        [Display("Parent folder")]
         public string? ParentFolderToken { get; set; }
 
-        [Display("Web URL")]
+        [Display("File URL")]
         public string? Url { get; set; }
     }
 }

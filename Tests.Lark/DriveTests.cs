@@ -24,7 +24,7 @@ namespace Tests.Lark
         {
             var action = new DriveActions(InvocationContext, FileManager);
 
-            var folderName = new Apps.Lark.Models.Request.DownloadFileRequest {FileToken= "QWuyb5x1toKAatxWRAEjbiYupIf" };
+            var folderName = new Apps.Lark.Models.Request.DownloadFileRequest {FileToken= "Ee8vbXWi3oskbyxv6oEjeE3fpqb" };
             var response = await action.DownloadFile(folderName);
 
             var json = Newtonsoft.Json.JsonConvert.SerializeObject(response, Newtonsoft.Json.Formatting.Indented);

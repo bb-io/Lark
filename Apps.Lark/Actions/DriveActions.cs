@@ -65,32 +65,20 @@ namespace Apps.Lark.Actions
             if (!resp.IsSuccessful || resp.RawBytes is null || resp.RawBytes.Length == 0)
                 throw new PluginApplicationException($"Failed to download file. HTTP {(int)resp.StatusCode}. Content: {resp.Content}");
 
+            var contentType = !string.IsNullOrWhiteSpace(resp.ContentType)
+                ? resp.ContentType!
+                : "application/octet-stream";
+
             string? headerName = resp.Headers?
                 .FirstOrDefault(h => string.Equals(h.Name, "Content-Disposition", StringComparison.OrdinalIgnoreCase))
                 ?.Value?.ToString();
 
-            string? nameFromHeader = null;
-            if (!string.IsNullOrEmpty(headerName))
-            {
-                const string marker = "filename=";
-                var idx = headerName.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-                if (idx >= 0)
-                    nameFromHeader = headerName[(idx + marker.Length)..].Trim(' ', '"', '\'');
-            }
-
-            var finalBase = !string.IsNullOrWhiteSpace(input.FileName)
-                ? input.FileName!.Trim()
-                : (nameFromHeader ?? input.FileToken);
-
-            var finalExt = !string.IsNullOrWhiteSpace(input.Extension)
-                ? input.Extension!.Trim().TrimStart('.')
-                : null;
-
-            var finalName = finalExt is null ? finalBase : $"{finalBase}.{finalExt}";
-
-            var contentType = !string.IsNullOrWhiteSpace(resp.ContentType)
-                ? resp.ContentType!
-                : "application/octet-stream";
+            var finalName = BuildDownloadFileName(
+                input.FileToken,
+                input.FileName,
+                input.Extension,
+                headerName,
+                contentType);
 
             using var ms = new MemoryStream(resp.RawBytes);
             var fileRef = await fileManagementClient.UploadAsync(ms, contentType, finalName);
@@ -213,6 +201,117 @@ namespace Apps.Lark.Actions
                 throw new PluginApplicationException("Root folder token is missing in response.");
 
             return root!;
+        }
+
+        private static string? TryGetFileNameFromContentDisposition(string? contentDisposition)
+        {
+            if (string.IsNullOrWhiteSpace(contentDisposition))
+                return null;
+
+            const string fileNameStarMarker = "filename*=";
+            var starIndex = contentDisposition.IndexOf(fileNameStarMarker, StringComparison.OrdinalIgnoreCase);
+            if (starIndex >= 0)
+            {
+                var value = contentDisposition[(starIndex + fileNameStarMarker.Length)..]
+                    .Split(';', 2)[0]
+                    .Trim(' ', '"', '\'');
+
+                var encodedPrefixIndex = value.IndexOf("''", StringComparison.Ordinal);
+                if (encodedPrefixIndex >= 0)
+                    value = value[(encodedPrefixIndex + 2)..];
+
+                try
+                {
+                    return Uri.UnescapeDataString(value);
+                }
+                catch
+                {
+                    return value;
+                }
+            }
+
+            const string fileNameMarker = "filename=";
+            var index = contentDisposition.IndexOf(fileNameMarker, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                return null;
+
+            return contentDisposition[(index + fileNameMarker.Length)..]
+                .Split(';', 2)[0]
+                .Trim(' ', '"', '\'');
+        }
+
+        private static string BuildDownloadFileName(
+            string fileToken,
+            string? fileNameOverride,
+            string? extensionOverride,
+            string? contentDisposition,
+            string contentType)
+        {
+            var overrideName = fileNameOverride?.Trim();
+            if (!string.IsNullOrWhiteSpace(overrideName))
+            {
+                var overrideExtension = !string.IsNullOrWhiteSpace(extensionOverride)
+                    ? extensionOverride.Trim().TrimStart('.')
+                    : null;
+
+                if (string.IsNullOrWhiteSpace(overrideExtension) || HasExtension(overrideName))
+                    return overrideName;
+
+                return $"{overrideName}.{overrideExtension}";
+            }
+
+            var headerFileName = TryGetFileNameFromContentDisposition(contentDisposition);
+            if (!string.IsNullOrWhiteSpace(headerFileName))
+                return headerFileName;
+
+            var inferredExtension = !string.IsNullOrWhiteSpace(extensionOverride)
+                ? extensionOverride.Trim().TrimStart('.')
+                : TryGetExtensionFromContentType(contentType);
+
+            return string.IsNullOrWhiteSpace(inferredExtension)
+                ? fileToken
+                : $"{fileToken}.{inferredExtension}";
+        }
+
+        private static bool HasExtension(string fileName)
+            => !string.IsNullOrWhiteSpace(Path.GetExtension(fileName));
+
+        private static string? TryGetExtensionFromContentType(string? contentType)
+        {
+            if (string.IsNullOrWhiteSpace(contentType))
+                return null;
+
+            var normalized = contentType.Split(';', 2)[0].Trim().ToLowerInvariant();
+
+            return normalized switch
+            {
+                "text/plain" => "txt",
+                "text/csv" => "csv",
+                "text/html" => "html",
+                "text/markdown" => "md",
+                "text/xml" => "xml",
+                "application/json" => "json",
+                "application/pdf" => "pdf",
+                "application/xml" => "xml",
+                "application/zip" => "zip",
+                "application/rtf" => "rtf",
+                "application/msword" => "doc",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => "docx",
+                "application/vnd.ms-excel" => "xls",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => "xlsx",
+                "application/vnd.ms-powerpoint" => "ppt",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation" => "pptx",
+                "image/jpeg" => "jpg",
+                "image/png" => "png",
+                "image/gif" => "gif",
+                "image/webp" => "webp",
+                "image/svg+xml" => "svg",
+                "audio/mpeg" => "mp3",
+                "audio/wav" => "wav",
+                "video/mp4" => "mp4",
+                "video/quicktime" => "mov",
+                _ => null
+            };
         }
     }
 }

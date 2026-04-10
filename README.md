@@ -1,4 +1,4 @@
-# Blackbird.io Lark [Beta]
+ï»¿# Blackbird.io Lark [Beta]
 
 Blackbird is the new automation backbone for the language technology industry. Blackbird provides enterprise-scale automation and orchestration with a simple no-code/low-code platform. Blackbird enables ambitious organizations to identify, vet and automate as many processes as possible. Not just localization workflows, but any business and IT process. This repository represents an application that is deployable on Blackbird and usable inside the workflow editor.
 
@@ -57,8 +57,8 @@ For current configuration, you will need the following scopes:
 
 | Scope                                | Description                                    |
 |--------------------------------------|------------------------------------------------|
-| `contact:user.base:readonly`         | Access users’ basic information                |
-| `contact:user.employee_id:readonly`  | Access users’ employee IDs; obtain user ID     |
+| `contact:user.base:readonly`         | Access usersâ€™ basic information                |
+| `contact:user.employee_id:readonly`  | Access usersâ€™ employee IDs; obtain user ID     |
 | `drive:drive`                        | View, comment, edit, and manage all files in My Space |
 | `drive:drive:readonly`               | View, comment on, and download all files in My Space |
 | `drive:export:readonly`              | Export Docs documents                          |
@@ -145,6 +145,12 @@ To update field "Date", please use input property "New date value". To update fi
 - **Get range cells values** gets the values of a range of cells in a spreadsheet by specified range
 - **Get sheet cell** retrieves value for a specified cell in a spreadsheet
 - **Update sheet cell** updates value for a specified cell in a spreadsheet
+
+### Drive
+
+- **Create folder** creates a folder in Lark Drive. If no parent folder is provided, the folder is created in the root folder.
+- **Upload file** uploads a file to Lark Drive. If no parent folder is provided, the file is uploaded to the root folder.
+- **Download file** downloads a file from Lark Drive by file token.
 
 ## Events
 

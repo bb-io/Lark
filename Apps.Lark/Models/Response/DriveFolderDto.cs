@@ -4,16 +4,16 @@ namespace Apps.Lark.Models.Response
 {
     public class DriveFolderDto
     {
-        [Display("Folder token")]
+        [Display("Folder")]
         public string FolderToken { get; set; }
 
-        [Display("Name")]
+        [Display("Folder name")]
         public string Name { get; set; }
 
-        [Display("Parent token")]
+        [Display("Parent folder")]
         public string? ParentFolderToken { get; set; }
 
-        [Display("Web URL")]
+        [Display("Folder URL")]
         public string? Url { get; set; }
     }
 }

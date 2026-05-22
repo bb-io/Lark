@@ -12,7 +12,7 @@ public class LarkClient : BlackBirdRestClient
 {
     public LarkClient(IEnumerable<AuthenticationCredentialsProvider> creds) : base(new()
     {
-        BaseUrl = new Uri("https://open.larksuite.com/open-apis"),
+        BaseUrl = ResolveBaseUri(creds),
     })
     {
         var appId = creds.First(v => v.KeyName == CredsNames.AppId).Value;
@@ -55,6 +55,12 @@ public class LarkClient : BlackBirdRestClient
     {
         var response = await ExecuteWithErrorHandling(request);
         return JsonConvert.DeserializeObject<T>(response.Content, JsonSettings);
+    }
+
+    private static Uri ResolveBaseUri(IEnumerable<AuthenticationCredentialsProvider> creds)
+    {
+        var platform = creds.FirstOrDefault(v => v.KeyName == CredsNames.Platform)?.Value;
+        return new Uri(ApiHostResolver.GetBaseUrl(platform));
     }
 
     public async Task<string> GetToken(string appId, string appSecret)

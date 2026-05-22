@@ -11,13 +11,15 @@ Lark's comprehensive and in-depth open capabilities serve as a hub of informatio
 
 ## Before setting up
 
-Before you can connect you need to make sure that you have a Lark account  and you are setted up as an admin and the bot is enabled for the necessary groups
+Before you can connect you need to make sure that you have a Lark or Feishu account, you are set up as an admin, and the bot is enabled for the necessary groups.
 
-## Creating Lark custom application
+## Creating Lark or Feishu custom application
 
-To create a Lark custom application, follow these steps:
-1. Go to the [Lark Developer Console](https://open.larksuite.com/app?lang=en-US).
-1. Click on **Create Custom App**.
+To create a Lark or Feishu custom application, follow these steps:
+1. Open the developer console for your platform:
+   - Lark: [Lark Developer Console](https://open.larksuite.com/app?lang=en-US)
+   - Feishu: [Feishu Open Platform](https://open.feishu.cn/)
+2. Click on **Create Custom App**.
 3. Fill in the required information:
    - **App Name**: Choose a name for your application.
    - **App Icon**: Upload an icon for your application.
@@ -37,7 +39,7 @@ To create a Lark custom application, follow these steps:
 
 ## Adding scopes
 
-To add scopes to your Lark application, follow to page **Permissions & Scopes**
+To add scopes to your Lark or Feishu application, go to **Permissions & Scopes**.
 
 ![example4](Apps.Lark/image/adding-scopes-example.png)
 
@@ -90,7 +92,7 @@ For current configuration, you will need the following scopes:
 
 To get the Application ID and Application Secret, follow these steps:
 
-1. Go to the [Lark Developer Console](https://open.larksuite.com/app?lang=en-US).
+1. Open your Lark or Feishu developer console.
 2. Select your application.
 3. In the left sidebar, click on **Credentials and Basic info**.
 4. You will find the **Application ID** and **Application Secret** in the **Credentials** section.
@@ -103,8 +105,9 @@ To get the Application ID and Application Secret, follow these steps:
 1. Navigate to Apps, and identify the **Lark** app. You can use search to find it.
 2. Click _Add Connection_.
 3. Name your connection for future reference e.g. 'My organization'.
-4. Input the 'Application ID' and 'Application Secret' from your Lark application.
-5. Click _Authorize connection_.
+4. Select the **Platform** value that matches your workspace: **Lark** or **Feishu**.
+5. Input the 'Application ID' and 'Application Secret' from your application.
+6. Click _Authorize connection_.
 
 ## Actions
 

@@ -10,7 +10,19 @@ public class ConnectionDefinition : IConnectionDefinition
     {
         new()
         {
-            Name = "Developer API key",
+            Name = PlatformTypes.Lark,
+            DisplayName = "Lark (International)",
+            AuthenticationType = ConnectionAuthenticationType.Undefined,
+            ConnectionProperties = new List<ConnectionProperty>
+            {
+                new(CredsNames.AppId) { DisplayName = "Application ID"},
+                new(CredsNames.AppSecret) { DisplayName="Application secret", Sensitive=true}
+            }
+        },
+        new()
+        {
+            Name = PlatformTypes.Feishu,
+            DisplayName = "Feishu (China)",
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = new List<ConnectionProperty>
             {
@@ -23,6 +35,10 @@ public class ConnectionDefinition : IConnectionDefinition
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(
         Dictionary<string, string> values)
     {
+        var platform = values.TryGetValue(nameof(ConnectionPropertyGroup), out var selectedGroup) &&
+            PlatformTypes.SupportedPlatforms.Contains(selectedGroup)
+            ? selectedGroup
+            : PlatformTypes.Lark;
 
         var appId = values.First(v => v.Key == CredsNames.AppId);
         yield return new AuthenticationCredentialsProvider(
@@ -34,6 +50,11 @@ public class ConnectionDefinition : IConnectionDefinition
         yield return new AuthenticationCredentialsProvider(
             appSecret.Key,
             appSecret.Value
+        );
+
+        yield return new AuthenticationCredentialsProvider(
+            CredsNames.Platform,
+            platform
         );
     }
 }

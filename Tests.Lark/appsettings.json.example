@@ -1,7 +1,8 @@
 {
   "ConnectionDefinition": {
     "app_id": "",
-    "app_secret": ""
+    "app_secret": "",
+    "platform": "lark"
   },
   "TestFolder": "TestFiles"
 }

@@ -10,22 +10,20 @@ public class ConnectionDefinition : IConnectionDefinition
     {
         new()
         {
-            Name = PlatformTypes.Lark,
-            DisplayName = "Lark (International)",
+            Name = "Developer API key",
+            DisplayName = "Developer API key",
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = new List<ConnectionProperty>
             {
-                new(CredsNames.AppId) { DisplayName = "Application ID"},
-                new(CredsNames.AppSecret) { DisplayName="Application secret", Sensitive=true}
-            }
-        },
-        new()
-        {
-            Name = PlatformTypes.Feishu,
-            DisplayName = "Feishu (China)",
-            AuthenticationType = ConnectionAuthenticationType.Undefined,
-            ConnectionProperties = new List<ConnectionProperty>
-            {
+                new(CredsNames.Platform)
+                {
+                    DisplayName = "Platform",
+                    DataItems = new ConnectionPropertyValue[]
+                    {
+                        new(PlatformTypes.Lark, "Lark (International)"),
+                        new(PlatformTypes.Feishu, "Feishu (China)")
+                    }
+                },
                 new(CredsNames.AppId) { DisplayName = "Application ID"},
                 new(CredsNames.AppSecret) { DisplayName="Application secret", Sensitive=true}
             }
@@ -35,9 +33,9 @@ public class ConnectionDefinition : IConnectionDefinition
     public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(
         Dictionary<string, string> values)
     {
-        var platform = values.TryGetValue(nameof(ConnectionPropertyGroup), out var selectedGroup) &&
-            PlatformTypes.SupportedPlatforms.Contains(selectedGroup)
-            ? selectedGroup
+        var platform = values.TryGetValue(CredsNames.Platform, out var selectedPlatform) &&
+            PlatformTypes.SupportedPlatforms.Contains(selectedPlatform)
+            ? selectedPlatform
             : PlatformTypes.Lark;
 
         var appId = values.First(v => v.Key == CredsNames.AppId);

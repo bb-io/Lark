@@ -105,7 +105,7 @@ To get the Application ID and Application Secret, follow these steps:
 1. Navigate to Apps, and identify the **Lark** app. You can use search to find it.
 2. Click _Add Connection_.
 3. Name your connection for future reference e.g. 'My organization'.
-4. Select the connection type that matches your platform: **Lark** or **Feishu**.
+4. Select the **Platform** value that matches your workspace: **Lark** or **Feishu**.
 5. Input the 'Application ID' and 'Application Secret' from your application.
 6. Click _Authorize connection_.
 

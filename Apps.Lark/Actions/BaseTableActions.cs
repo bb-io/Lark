@@ -118,7 +118,7 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
     }
 
     [Action("Update base record", Description = "Updates base record")]
-    public async Task<UpdateRecordDataDto> UpdateRecord([ActionParameter] BaseRequest baseId,
+    public async Task<RecordResponse> UpdateRecord([ActionParameter] BaseRequest baseId,
         [ActionParameter] BaseTableRequest table,
         [ActionParameter] UpdateRecordRequest update,
         [ActionParameter] GetBaseRecord record
@@ -212,24 +212,12 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
             Method.Put);
         updateReq.AddJsonBody(body);
 
-        var updateResp = await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(updateReq);
+        await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(updateReq);
 
-        var updatedFields = LarkOutputValueNormalizer.NormalizeDictionary(selected.Fields);
-        if (updateResp.Data?.Record?.Fields != null)
+        return await GetRecord(baseId, table, new GetBaseRecord
         {
-            foreach (var f in updateResp.Data.Record.Fields)
-                updatedFields[f.Key] = LarkOutputValueNormalizer.NormalizeValue(f.Value)!;
-        }
-
-        return new UpdateRecordDataDto
-        {
-            Record = new RecordItemDto
-            {
-                Fields = updatedFields,
-                Id = selected.Id,
-                RecordId = selected.RecordId
-            }
-        };
+            RecordID = selected.RecordId ?? record.RecordID
+        });
     }
 
     [Action("Get person entry from base table record", Description = "Gets person entry from base table record")]

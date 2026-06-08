@@ -214,11 +214,11 @@ public class BaseTableActions(InvocationContext invocationContext, IFileManageme
 
         var updateResp = await larkClient.ExecuteWithErrorHandling<UpdateRecordResponseDto>(updateReq);
 
-        var updatedFields = selected.Fields.ToDictionary(kv => kv.Key, kv => kv.Value as object);
+        var updatedFields = LarkOutputValueNormalizer.NormalizeDictionary(selected.Fields);
         if (updateResp.Data?.Record?.Fields != null)
         {
             foreach (var f in updateResp.Data.Record.Fields)
-                updatedFields[f.Key] = f.Value;
+                updatedFields[f.Key] = LarkOutputValueNormalizer.NormalizeValue(f.Value)!;
         }
 
         return new UpdateRecordDataDto

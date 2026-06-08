@@ -13,7 +13,7 @@ public class BaseTableTests : TestBase
     public async Task SearchBaseTables_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
 
         // Execute
         var response = await _baseTableActions.SearchBaseTables(baseRequest);
@@ -26,9 +26,12 @@ public class BaseTableTests : TestBase
     public async Task GetBaseRecord_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
-        var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
-        var recordRequest = new GetBaseRecord { RecordID = "rec5HK3Mja" };
+        //var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
+        //var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        //var recordRequest = new GetBaseRecord { RecordID = "rec27xhhEwk6H9" };
+        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
+        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
+        var recordRequest = new GetBaseRecord { RecordID = "recQXFIkrm" };
 
         // Execute
         var response = await _baseTableActions.GetRecord(baseRequest, tableRequest, recordRequest);
@@ -41,8 +44,8 @@ public class BaseTableTests : TestBase
     public async Task FindBaseRecordByFieldValue_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
-        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
+        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
         var valueRequest = new FindBaseRecordByFieldValueRequest { FieldId= "fld7R0hQQb", Value = "695cf0a5c25196cea9820b36" };
 
         // Execute
@@ -56,30 +59,32 @@ public class BaseTableTests : TestBase
     public async Task UpdateBaseRecord_IssSuccess()
     {
 
-        //var baseRequest = new BaseRequest { AppId = "MXjZb5uHvahFiMs5mUvjIzC9pxf" };
-        //var tableRequest = new BaseTableRequest { TableId = "tblORLQK2OUtTZ9p" };
-        //var recordRequest = new GetBaseRecord { RecordID = "rec5HK3Mja" };
-        //var updateRequest = new UpdateRecordRequest
-        //{
-        //    FieldName = "Custom text column name",
-        //    NewValue = "Remarks new text again"
-        //    //NewDateValue= DateTime.UtcNow.AddDays(2),
-        //    //NewValues = new List<string> { "Option 12", "Option 21345435" },
-        //    //Attachment = new FileReference { Name = "Test3.png" }
-        //    //NewCheckboxValue = false
-        //    //NewLinkUrl = "https://us-1.blackbird.io/n/79/flights/6927c126df0da03b0c32ef00"
-        //};
+        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
+        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
+        var recordRequest = new GetBaseRecord { RecordID = "recUuJppcn" };
+        var updateRequest = new UpdateRecordRequest
+        {
+            FieldName = "Text",
+            NewValue = "test from bb.io 2"
+            //NewDateValue= DateTime.UtcNow.AddDays(2),
+            //NewValues = new List<string> { "Option 12", "Option 21345435" },
+            //Attachment = new FileReference { Name = "Test3.png" }
+            //NewCheckboxValue = false
+            //NewLinkUrl = "https://us-1.blackbird.io/n/79/flights/6927c126df0da03b0c32ef00"
+        };
 
 
         //Setup parameters
-        var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
-        var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
-        var recordRequest = new GetBaseRecord { RecordID = "recv4dsUUnD0eN" };
-        var updateRequest = new UpdateRecordRequest
-        {
-            FieldName = "Status",
-            NewValue = "Approved"  //Approved  Cancelled
-        };
+        //var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
+        //var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
+        //var recordRequest = new GetBaseRecord { RecordID = "rec27xhhEwk6H9" };
+        //var updateRequest = new UpdateRecordRequest
+        //{
+        //    //FieldName = "Status",
+        //    //NewValue = "Approved"  //Approved  Cancelled
+        //    FieldName= "Strings job (ML)",
+        //    NewValue= "https://app.phrase.com/accounts/weex-global/projects/trade-language/jobs/c2c4283dbb6acbd14887f872abd9dfe3"
+        //};
 
         // Execute
         var response = await _baseTableActions.UpdateRecord(baseRequest, tableRequest, updateRequest, recordRequest);

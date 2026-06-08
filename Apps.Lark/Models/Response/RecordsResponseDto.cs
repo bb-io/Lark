@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+using Apps.Lark.Utils;
+using Blackbird.Applications.Sdk.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -46,7 +47,7 @@ namespace Apps.Lark.Models.Response
             get
             {
                 var values = Fields?
-                    .Select(kv => kv.Value?.ToString() ?? string.Empty)
+                    .Select(kv => LarkOutputValueNormalizer.StringifyValue(kv.Value))
                     .ToList()
                     ?? new List<string>();
                 return values;

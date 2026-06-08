@@ -38,6 +38,19 @@ public static class LarkOutputValueNormalizer
         };
     }
 
+    public static string StringifyValue(object? value)
+    {
+        return value switch
+        {
+            null => string.Empty,
+            string s => s,
+            IDictionary<string, object> dictionary => string.Join(", ", dictionary.Values.Select(StringifyValue).Where(v => !string.IsNullOrWhiteSpace(v))),
+            IDictionary dictionary => string.Join(", ", dictionary.Values.Cast<object?>().Select(StringifyValue).Where(v => !string.IsNullOrWhiteSpace(v))),
+            IEnumerable enumerable when value is not string => string.Join(", ", enumerable.Cast<object?>().Select(StringifyValue).Where(v => !string.IsNullOrWhiteSpace(v))),
+            _ => value.ToString() ?? string.Empty
+        };
+    }
+
     private static object? NormalizeToken(JToken token)
     {
         return token switch

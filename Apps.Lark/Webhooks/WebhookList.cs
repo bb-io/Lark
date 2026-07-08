@@ -118,8 +118,29 @@ namespace Apps.Lark.Webhooks
                 .DeserializeObject<BasePayload<BaseAppRecordChanged>>(GetRawBody(webhookRequest.Body))
                 ?? throw new Exception("No serializable payload was found in incoming request.");
 
+            var changedEvent = payload.Event
+                ?? throw new Exception("No event payload was found in incoming request.");
+
+            var actions = changedEvent.ActionList ?? [];
+            var meaningfulActions = actions
+                .Where(action => (action.BeforeValue?.Count ?? 0) > 0 || (action.AfterValue?.Count ?? 0) > 0)
+                .ToList();
+
+            if (actions.Count == 0)
+                InvocationContext.Logger?.LogInformation(
+                    "[Lark WebhookLogger] Empty action list received.",
+                    null);
+
+            if (meaningfulActions.Count == 0)
+            {
+                InvocationContext.Logger?.LogInformation(
+                    "[Lark WebhookLogger] No meaningful field delta found; skipping event.",
+                    null);
+                return PreflightResponse<UpdatedRecordResponse>();
+            }
+
             var schemaDto = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(
-                new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{payload.Event.TableId}/fields", Method.Get));
+                new RestRequest($"bitable/v1/apps/{baseId.AppId}/tables/{changedEvent.TableId}/fields", Method.Get));
 
             var schemaByFieldId = schemaDto.Data.Items.ToDictionary(i => i.FieldId, i => i);
             var schemaByFieldName = schemaDto.Data.Items
@@ -149,15 +170,18 @@ namespace Apps.Lark.Webhooks
 
                 var passes = false;
 
-                foreach (var action in payload.Event.ActionList)
+                foreach (var action in meaningfulActions)
                 {
-                    var afterRaw = action.AfterValue.FirstOrDefault(av => av.FieldId == schemaItem.FieldId)?.FieldValueData;
-                    var beforeRaw = action.BeforeValue.FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)?.FieldValueData;
+                    var afterValues = action.AfterValue ?? [];
+                    var beforeValues = action.BeforeValue ?? [];
+
+                    var afterRaw = afterValues.FirstOrDefault(av => av.FieldId == schemaItem.FieldId)?.FieldValueData;
+                    var beforeRaw = beforeValues.FirstOrDefault(bv => bv.FieldId == schemaItem.FieldId)?.FieldValueData;
 
                     var afterSource = "after";
                     if (afterRaw == null)
                     {
-                        afterRaw = await GetRecordFieldRawAsync(baseId.AppId, payload.Event.TableId, action.RecordId, schemaItem);
+                        afterRaw = await GetRecordFieldRawAsync(baseId.AppId, changedEvent.TableId, action.RecordId, schemaItem);
                         afterSource = "live";
                     }
 
@@ -213,7 +237,7 @@ namespace Apps.Lark.Webhooks
 
             InvocationContext.Logger?.LogInformation("[Lark WebhookLogger] Checkpoint: building before/after records", null);
 
-            var beforeRecords = payload.Event.ActionList
+            var beforeRecords = meaningfulActions
                 .Select(action => BaseRecordJsonParser.ConvertToRecord(
                     JsonConvert.SerializeObject(new
                     {
@@ -222,7 +246,7 @@ namespace Apps.Lark.Webhooks
                             record = new
                             {
                                 record_id = action.RecordId,
-                                fields = action.BeforeValue
+                                fields = (action.BeforeValue ?? [])
                                     .ToDictionary(
                                         bv => schemaByFieldId[bv.FieldId].FieldName,
                                         bv => bv.FieldValueData)
@@ -233,7 +257,7 @@ namespace Apps.Lark.Webhooks
                 .Where(r => r != null)
                 .ToList();
 
-            var afterRecords = payload.Event.ActionList
+            var afterRecords = meaningfulActions
                 .Select(action => BaseRecordJsonParser.ConvertToRecord(
                     JsonConvert.SerializeObject(new
                     {
@@ -242,7 +266,7 @@ namespace Apps.Lark.Webhooks
                             record = new
                             {
                                 record_id = action.RecordId,
-                                fields = action.AfterValue
+                                fields = (action.AfterValue ?? [])
                                     .ToDictionary(
                                         av => schemaByFieldId[av.FieldId].FieldName,
                                         av => av.FieldValueData)
@@ -256,9 +280,9 @@ namespace Apps.Lark.Webhooks
             var result = new UpdatedRecordResponse
             {
                 BaseId = baseId.AppId,
-                TableId = payload.Event.TableId,
-                RecordId = payload.Event.ActionList.First().RecordId,
-                UpdateTime = DateTimeOffset.FromUnixTimeSeconds(payload.Event.UpdateTime).UtcDateTime,
+                TableId = changedEvent.TableId,
+                RecordId = meaningfulActions.FirstOrDefault()?.RecordId ?? string.Empty,
+                UpdateTime = DateTimeOffset.FromUnixTimeSeconds(changedEvent.UpdateTime).UtcDateTime,
                 BeforeFields = beforeRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList(),
                 AfterFields = afterRecords.SelectMany(r => r.Fields).DistinctBy(f => f.FieldId).ToList()
             };

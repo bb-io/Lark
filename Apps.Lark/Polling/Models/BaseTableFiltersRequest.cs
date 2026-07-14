@@ -6,6 +6,9 @@ namespace Apps.Lark.Polling.Models
 {
     public class BaseTableFiltersRequest
     {
+        [Display("Record ID")]
+        public string? RecordId { get; set; }
+
         [DataSource(typeof(BaseTableFieldDataSourceHandler))]
         [Display("Field ID")]
         public string? FieldId { get; set; }

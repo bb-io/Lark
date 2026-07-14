@@ -121,6 +121,14 @@ namespace Apps.Lark.Webhooks
             var changedEvent = payload.Event
                 ?? throw new Exception("No event payload was found in incoming request.");
 
+            if (!string.Equals(changedEvent.TableId, tableId.TableId, StringComparison.Ordinal))
+            {
+                InvocationContext.Logger?.LogInformation(
+                    $"[Lark WebhookLogger] Table filter mismatch. Expected='{tableId.TableId}', Actual='{changedEvent.TableId}'",
+                    null);
+                return PreflightResponse<UpdatedRecordResponse>();
+            }
+
             var actions = changedEvent.ActionList ?? [];
             var meaningfulActions = actions
                 .Where(action => (action.BeforeValue?.Count ?? 0) > 0 || (action.AfterValue?.Count ?? 0) > 0)
@@ -137,6 +145,21 @@ namespace Apps.Lark.Webhooks
                     "[Lark WebhookLogger] No meaningful field delta found; skipping event.",
                     null);
                 return PreflightResponse<UpdatedRecordResponse>();
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.RecordId))
+            {
+                var recordIdFilter = filter.RecordId.Trim();
+                meaningfulActions = meaningfulActions
+                    .Where(action => string.Equals(action.RecordId, recordIdFilter, StringComparison.Ordinal))
+                    .ToList();
+
+                InvocationContext.Logger?.LogInformation(
+                    $"[Lark WebhookLogger] Record filter applied. Expected='{recordIdFilter}', Matches={meaningfulActions.Count}",
+                    null);
+
+                if (meaningfulActions.Count == 0)
+                    return PreflightResponse<UpdatedRecordResponse>();
             }
 
             var schemaDto = await Client.ExecuteWithErrorHandling<BaseTableSchemaApiResponseDto>(

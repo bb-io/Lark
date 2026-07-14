@@ -58,7 +58,7 @@ public class BaseTableTests : TestBase
     [TestMethod]
     public async Task UpdateBaseRecord_IssSuccess()
     {
-
+        // These values are local test fixtures and are not used by production code.
         var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
         var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
         var recordRequest = new GetBaseRecord { RecordID = "recUuJppcn" };
@@ -73,8 +73,7 @@ public class BaseTableTests : TestBase
             //NewLinkUrl = "https://us-1.blackbird.io/n/79/flights/6927c126df0da03b0c32ef00"
         };
 
-
-        //Setup parameters
+        // Setup parameters for an alternative manual test case.
         //var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
         //var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
         //var recordRequest = new GetBaseRecord { RecordID = "rec27xhhEwk6H9" };

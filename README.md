@@ -27,13 +27,13 @@ To create a Lark or Feishu custom application, follow these steps:
  
    ![example1](Apps.Lark/image/Lark-create-app-example.png)
 	
-4. Click on **Create** to create your application
-5. After creating the customn application, you will be redirected to the **Add features** page
+4. Click on **Create** to create your application.
+5. After creating the custom application, you will be redirected to the **Add features** page.
  
    ![example2](Apps.Lark/image/features-example.png)
 
-6. Select the features you want to add to your application. For current configuration, you will need **Bot**, **Web app**, **Workplace block** and **Base record view**.
-7. After configuring the features you need to release the app version
+6. Select the features you want to add to your application. For the current configuration, you will need **Bot**, **Web app**, **Workplace block**, and **Base record view**.
+7. After configuring the features, release the app version.
 
    ![example3](Apps.Lark/image/release-version-example.png)
 

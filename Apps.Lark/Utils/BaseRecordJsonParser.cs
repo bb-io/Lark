@@ -92,6 +92,7 @@ public static class BaseRecordJsonParser
         {
             var raw = field.Value<string>() ?? string.Empty;
             var trimmed = raw.TrimStart();
+            // Some API responses serialize structured values as JSON strings, so normalize them before parsing by field type.
             if ((trimmed.StartsWith("[") && trimmed.EndsWith("]")) ||
                 (trimmed.StartsWith("{") && trimmed.EndsWith("}")))
             {
@@ -269,7 +270,7 @@ public static class BaseRecordJsonParser
 
     private static string StringFromRelation(JToken field)
     {
-        // search request returns only related ids
+        // Search responses contain only related record ids.
         if (field.Type == JTokenType.Object)
         {
             var linkFieldFromSearch = field?["link_record_ids"] as JArray;
@@ -277,7 +278,7 @@ public static class BaseRecordJsonParser
             return string.Join(", ", linkedIds);
         }
 
-        // detailed record request returns array of full link details
+        // Detailed record responses contain full link objects with nested record ids.
         var linkField = field as JArray;
         List<string> recordIds = [];
         foreach (JToken? linkToken in linkField ?? [])
@@ -310,8 +311,8 @@ public static class BaseRecordJsonParser
             return field.Value<string>() ?? string.Empty;
         }
 
-        // Lark returns list fields as is,
-        // but converts other types to lists with a single item
+        // Lark keeps list-like fields unchanged,
+        // but wraps many scalar formula results into a single-item list.
         var listFieldTypes = new List<int>
         {
             BaseFieldTypes.Multiline,

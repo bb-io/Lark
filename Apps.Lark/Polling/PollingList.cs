@@ -99,7 +99,7 @@ namespace Apps.Lark.Polling
             [PollingEventParameter] BaseRequest baseId,
             [PollingEventParameter] BaseTableRequest table)
         {
-            // first polling, init memory and return early
+            // On the first poll we only initialize memory and skip emitting an event.
             if (request.Memory == null)
             {
                 return new PollingEventResponse<DateTimeMemory, RecordListResponse>
@@ -110,7 +110,7 @@ namespace Apps.Lark.Polling
                 };
             }
 
-            // main logic
+            // Continue with the regular polling flow after memory has been initialized.
             var memory = request.Memory;
             var lastPollingDay = memory.LastPollingTime.Date;
             var pollingStartTime = DateTime.UtcNow;
@@ -194,7 +194,7 @@ namespace Apps.Lark.Polling
             var lastModifiedTime = DateTime.Parse(lastModifiedTimeString ?? "").ToUniversalTime();
 
             var isModifiedSinceLastPolling = lastModifiedTime > memory.LastPollingTime;
-            var hasExpectedFieldChanged = true; // we only check this if fieldId and fieldExpectedValue are provided
+            var hasExpectedFieldChanged = true; // This condition is only evaluated when both optional field filters are provided.
 
             if (isModifiedSinceLastPolling && !string.IsNullOrEmpty(fieldId) && !string.IsNullOrEmpty(fieldExpectedValue))
             {
@@ -256,7 +256,7 @@ namespace Apps.Lark.Polling
 
             var conditions = new List<object>();
 
-            // include tomorrow to deal with timezone conversions of time to date
+            // Include tomorrow as a buffer for timezone conversions when a timestamp becomes a date-only value.
             while (currentDay <= tomorrow)
             {
                 var unixTimestamp = ((DateTimeOffset)currentDay).ToUnixTimeMilliseconds().ToString();

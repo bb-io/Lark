@@ -5,14 +5,18 @@ namespace Apps.Lark.Models.Response
     public class GetUserResponse
     {
         [Display("User information")]
-        public UserDto UserInfo { get; set; }
+        public UserDto? UserInfo { get; set; }
 
         [Display("Mention user")]
         public string MentionUser
         {
             get
             {
-                return $"<at user_id=\"{UserInfo.UserId}\">{UserInfo.Name}</at>";
+                var userInfo = UserInfo;
+                if (string.IsNullOrEmpty(userInfo?.UserId))
+                    return string.Empty;
+
+                return $"<at user_id=\"{userInfo.UserId}\">{userInfo.Name}</at>";
             }
         }
     }

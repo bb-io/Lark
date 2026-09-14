@@ -10,6 +10,12 @@ namespace Apps.Appname.Api;
 
 public class LarkClient : BlackBirdRestClient
 {
+    private static readonly HashSet<int> RetryableErrorCodes = [1254607];
+
+    private const int MaxRetryAttempts = 3;
+    private const int MinRetryDelayMs = 1000;
+    private const int MaxRetryDelayMs = 10000;
+
     public LarkClient(IEnumerable<AuthenticationCredentialsProvider> creds) : base(new()
     {
         BaseUrl = ResolveBaseUri(creds),
@@ -43,12 +49,37 @@ public class LarkClient : BlackBirdRestClient
     }
     public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
-        var response = await ExecuteAsync(request);
+        for (var retryAttempt = 0; ; retryAttempt++)
+        {
+            var response = await ExecuteAsync(request);
 
-        if (!response.IsSuccessStatusCode)
-            throw ConfigureErrorException(response);
+            if (response.IsSuccessStatusCode)
+                return response;
 
-        return response;
+            if (!ShouldRetry(response) || retryAttempt >= MaxRetryAttempts)
+                throw ConfigureErrorException(response);
+
+            var delay = Random.Shared.Next(
+                MinRetryDelayMs,
+                MaxRetryDelayMs + 1);
+            await Task.Delay(delay);
+        }
+    }
+
+    private static bool ShouldRetry(RestResponse response)
+    {
+        if (string.IsNullOrWhiteSpace(response.Content))
+            return false;
+
+        try
+        {
+            var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+            return error is not null && RetryableErrorCodes.Contains(error.Code);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)

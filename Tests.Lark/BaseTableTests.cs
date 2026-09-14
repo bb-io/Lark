@@ -29,9 +29,9 @@ public class BaseTableTests : TestBase
         //var baseRequest = new BaseRequest { AppId = "E5yGb4HhMaEBThscld9lXt7Dgcb" };
         //var tableRequest = new BaseTableRequest { TableId = "tblKlmXjAsRDBl0Q" };
         //var recordRequest = new GetBaseRecord { RecordID = "rec27xhhEwk6H9" };
-        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
-        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
-        var recordRequest = new GetBaseRecord { RecordID = "recQXFIkrm" };
+        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
+        var recordRequest = new GetBaseRecord { RecordID = "rec289KjvMlcuc" };
 
         // Execute
         var response = await _baseTableActions.GetRecord(baseRequest, tableRequest, recordRequest);
@@ -44,9 +44,9 @@ public class BaseTableTests : TestBase
     public async Task FindBaseRecordByFieldValue_IssSuccess()
     {
         // Setup parameters
-        var baseRequest = new BaseRequest { AppId = "L1SebpqSKaRQccsJlybjAO4Bppg" };
-        var tableRequest = new BaseTableRequest { TableId = "tblJsOhO5AZt86JB" };
-        var valueRequest = new FindBaseRecordByFieldValueRequest { FieldId= "fld7R0hQQb", Value = "695cf0a5c25196cea9820b36" };
+        var baseRequest = new BaseRequest { AppId = "U20EbzMzSaRz3psPAsBlqNEOgZd" };
+        var tableRequest = new BaseTableRequest { TableId = "tblmJb3RMxHfMFbd" };
+        var valueRequest = new FindBaseRecordByFieldValueRequest { FieldId= "fldmWqdjNS", Value = "https://eu-1.blackbird.io/n/903/flights/da1e6971-c5fc-4303-8402-b4c100a6d3f6" };
 
         // Execute
         var response = await _baseTableActions.FindBaseRecordByFieldValue(baseRequest, tableRequest, valueRequest);

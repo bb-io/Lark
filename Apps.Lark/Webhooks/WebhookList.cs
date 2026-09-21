@@ -97,7 +97,7 @@ namespace Apps.Lark.Webhooks
 
 
         [Webhook("On base table record updated", typeof(BaseAppRecordChangedHandler), Description = "This event is triggered when the base table record updates")]
-        public async Task<WebhookResponse<UpdatedRecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter] BaseRequest baseId,
+        public async Task<WebhookResponse<UpdatedRecordResponse>> OnBaseTableRecordUpdated(WebhookRequest webhookRequest, [WebhookParameter(true)] BaseRequest baseId,
             [WebhookParameter] BaseTableRequest tableId, [WebhookParameter] BaseTableFiltersRequest filter)
         {
             InvocationContext.Logger?.LogInformation("[Lark WebhookLogger] Invoked webhook", null);

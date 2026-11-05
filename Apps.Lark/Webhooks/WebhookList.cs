@@ -21,7 +21,7 @@ using System.Text.RegularExpressions;
 namespace Apps.Lark.Webhooks
 {
     [WebhookList]
-    public class WebhookList : Invocable
+    public class WebhookList : Invocable, IAsyncWebhookHandler
     {
         public WebhookList(InvocationContext invocationContext) : base(invocationContext)
         {

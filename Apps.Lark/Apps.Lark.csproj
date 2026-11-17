@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <Product>Lark</Product>
         <Description>Lark's comprehensive and in-depth open capabilities serve as a hub of information and an entry point for businesses</Description>
-        <Version>1.0.41</Version>
+        <Version>1.0.42</Version>
         <AssemblyName>Apps.Lark</AssemblyName>
     </PropertyGroup>
 
@@ -20,4 +20,7 @@
         <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.26" />
     </ItemGroup>
 
+    <ItemGroup>
+        <EmbeddedResource Include="..\README.md" Link="README.md" CopyToOutputDirectory="Always" />
+    </ItemGroup>
 </Project>
